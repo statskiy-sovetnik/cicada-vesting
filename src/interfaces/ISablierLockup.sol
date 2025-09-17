@@ -32,14 +32,6 @@ interface ISablierLockup is ISablierLockupBase {
         LockupLinear.UnlockAmounts unlockAmounts
     );
 
-    /// @notice Emitted when a stream is created using Lockup tranched model.
-    /// @param streamId The ID of the newly created stream.
-    /// @param commonParams Common parameters emitted in Create events across all Lockup models.
-    /// @param tranches The tranches the protocol uses to compose the tranched distribution function.
-    event CreateLockupTranchedStream(
-        uint256 indexed streamId, Lockup.CreateEventCommon commonParams, LockupTranched.Tranche[] tranches
-    );
-
     /*//////////////////////////////////////////////////////////////////////////
                                  CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
@@ -78,27 +70,6 @@ interface ISablierLockup is ISablierLockupBase {
                                NON-CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @notice Creates a stream by setting the start time to `block.timestamp`, and the end time to the sum of
-    /// `block.timestamp` and all specified time durations. The segment timestamps are derived from these
-    /// durations. The stream is funded by `msg.sender` and is wrapped in an ERC-721 NFT.
-    ///
-    /// @dev Emits a {Transfer}, {CreateLockupDynamicStream} and {MetadataUpdate} event.
-    ///
-    /// Requirements:
-    /// - All requirements in {createWithTimestampsLD} must be met for the calculated parameters.
-    ///
-    /// @param params Struct encapsulating the function parameters, which are documented in {DataTypes}.
-    /// @param segmentsWithDuration Segments with durations used to compose the dynamic distribution function. Timestamps
-    /// are calculated by starting from `block.timestamp` and adding each duration to the previous timestamp.
-    /// @return streamId The ID of the newly created stream.
-    function createWithDurationsLD(
-        Lockup.CreateWithDurations calldata params,
-        LockupDynamic.SegmentWithDuration[] calldata segmentsWithDuration
-    )
-        external
-        payable
-        returns (uint256 streamId);
-
     /// @notice Creates a stream by setting the start time to `block.timestamp`, and the end time to
     /// the sum of `block.timestamp` and `durations.total`. The stream is funded by `msg.sender` and is wrapped in an
     /// ERC-721 NFT.
@@ -121,61 +92,7 @@ interface ISablierLockup is ISablierLockupBase {
         external
         payable
         returns (uint256 streamId);
-
-    /// @notice Creates a stream by setting the start time to `block.timestamp`, and the end time to the sum of
-    /// `block.timestamp` and all specified time durations. The tranche timestamps are derived from these
-    /// durations. The stream is funded by `msg.sender` and is wrapped in an ERC-721 NFT.
-    ///
-    /// @dev Emits a {Transfer}, {CreateLockupTrancheStream} and {MetadataUpdate} event.
-    ///
-    /// Requirements:
-    /// - All requirements in {createWithTimestampsLT} must be met for the calculated parameters.
-    ///
-    /// @param params Struct encapsulating the function parameters, which are documented in {DataTypes}.
-    /// @param tranchesWithDuration Tranches with durations used to compose the tranched distribution function.
-    /// Timestamps are calculated by starting from `block.timestamp` and adding each duration to the previous timestamp.
-    /// @return streamId The ID of the newly created stream.
-    function createWithDurationsLT(
-        Lockup.CreateWithDurations calldata params,
-        LockupTranched.TrancheWithDuration[] calldata tranchesWithDuration
-    )
-        external
-        payable
-        returns (uint256 streamId);
-
-    /// @notice Creates a stream with the provided segment timestamps, implying the end time from the last timestamp.
-    /// The stream is funded by `msg.sender` and is wrapped in an ERC-721 NFT.
-    ///
-    /// @dev Emits a {Transfer}, {CreateLockupDynamicStream} and {MetadataUpdate} event.
-    ///
-    /// Notes:
-    /// - As long as the segment timestamps are arranged in ascending order, it is not an error for some
-    /// of them to be in the past.
-    ///
-    /// Requirements:
-    /// - Must not be delegate called.
-    /// - `params.totalAmount` must be greater than zero.
-    /// - If set, `params.broker.fee` must not be greater than `MAX_BROKER_FEE`.
-    /// - `params.timestamps.start` must be greater than zero and less than the first segment's timestamp.
-    /// - `segments` must have at least one segment, but not more than `MAX_COUNT`.
-    /// - The segment timestamps must be arranged in ascending order.
-    /// - `params.timestamps.end` must be equal to the last segment's timestamp.
-    /// - The sum of the segment amounts must equal the deposit amount.
-    /// - `params.recipient` must not be the zero address.
-    /// - `params.sender` must not be the zero address.
-    /// - `msg.sender` must have allowed this contract to spend at least `params.totalAmount` tokens.
-    /// - `params.shape.length` must not be greater than 32 characters.
-    ///
-    /// @param params Struct encapsulating the function parameters, which are documented in {DataTypes}.
-    /// @param segments Segments used to compose the dynamic distribution function.
-    /// @return streamId The ID of the newly created stream.
-    function createWithTimestampsLD(
-        Lockup.CreateWithTimestamps calldata params,
-        LockupDynamic.Segment[] calldata segments
-    )
-        external
-        payable
-        returns (uint256 streamId);
+    
 
     /// @notice Creates a stream with the provided start time and end time. The stream is funded by `msg.sender` and is
     /// wrapped in an ERC-721 NFT.
@@ -215,37 +132,4 @@ interface ISablierLockup is ISablierLockupBase {
         payable
         returns (uint256 streamId);
 
-    /// @notice Creates a stream with the provided tranche timestamps, implying the end time from the last timestamp.
-    /// The stream is funded by `msg.sender` and is wrapped in an ERC-721 NFT.
-    ///
-    /// @dev Emits a {Transfer}, {CreateLockupTrancheStream} and {MetadataUpdate} event.
-    ///
-    /// Notes:
-    /// - As long as the tranche timestamps are arranged in ascending order, it is not an error for some
-    /// of them to be in the past.
-    ///
-    /// Requirements:
-    /// - Must not be delegate called.
-    /// - `params.totalAmount` must be greater than zero.
-    /// - If set, `params.broker.fee` must not be greater than `MAX_BROKER_FEE`.
-    /// - `params.timestamps.start` must be greater than zero and less than the first tranche's timestamp.
-    /// - `tranches` must have at least one tranche, but not more than `MAX_COUNT`.
-    /// - The tranche timestamps must be arranged in ascending order.
-    /// - `params.timestamps.end` must be equal to the last tranche's timestamp.
-    /// - The sum of the tranche amounts must equal the deposit amount.
-    /// - `params.recipient` must not be the zero address.
-    /// - `params.sender` must not be the zero address.
-    /// - `msg.sender` must have allowed this contract to spend at least `params.totalAmount` tokens.
-    /// - `params.shape.length` must not be greater than 32 characters.
-    ///
-    /// @param params Struct encapsulating the function parameters, which are documented in {DataTypes}.
-    /// @param tranches Tranches used to compose the tranched distribution function.
-    /// @return streamId The ID of the newly created stream.
-    function createWithTimestampsLT(
-        Lockup.CreateWithTimestamps calldata params,
-        LockupTranched.Tranche[] calldata tranches
-    )
-        external
-        payable
-        returns (uint256 streamId);
 }
