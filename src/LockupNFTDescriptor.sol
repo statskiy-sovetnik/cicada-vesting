@@ -388,8 +388,6 @@ contract LockupNFTDescriptor is ILockupNFTDescriptor {
     function stringifyStatus(Lockup.Status status) internal pure returns (string memory) {
         if (status == Lockup.Status.DEPLETED) {
             return "Depleted";
-        } else if (status == Lockup.Status.CANCELED) {
-            return "Canceled";
         } else if (status == Lockup.Status.STREAMING) {
             return "Streaming";
         } else if (status == Lockup.Status.SETTLED) {

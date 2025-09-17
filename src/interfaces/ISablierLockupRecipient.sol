@@ -11,28 +11,6 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 /// The implementation MUST implement the {IERC165-supportsInterface} method, which MUST return `true` when called with
 /// `0xf8ee98d3`, i.e. `type(ISablierLockupRecipient).interfaceId`.
 interface ISablierLockupRecipient is IERC165 {
-    /// @notice Responds to cancellations.
-    ///
-    /// @dev Notes:
-    /// - The function MUST return the selector `ISablierLockupRecipient.onSablierLockupCancel.selector`.
-    /// - If this function reverts, the execution in the Lockup contract will revert as well.
-    ///
-    /// @param streamId The ID of the canceled stream.
-    /// @param sender The stream's sender, who canceled the stream.
-    /// @param senderAmount The amount of tokens refunded to the stream's sender, denoted in units of the token's
-    /// decimals.
-    /// @param recipientAmount The amount of tokens left for the stream's recipient to withdraw, denoted in units of
-    /// the token's decimals.
-    ///
-    /// @return selector The selector of this function needed to validate the hook.
-    function onSablierLockupCancel(
-        uint256 streamId,
-        address sender,
-        uint128 senderAmount,
-        uint128 recipientAmount
-    )
-        external
-        returns (bytes4 selector);
 
     /// @notice Responds to withdrawals triggered by any address except the contract implementing this interface.
     ///

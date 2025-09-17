@@ -136,20 +136,11 @@ library Errors {
     /// @notice Thrown when trying to withdraw an amount greater than the withdrawable amount.
     error SablierLockupBase_Overdraw(uint256 streamId, uint128 amount, uint128 withdrawableAmount);
 
-    /// @notice Thrown when trying to cancel or renounce a canceled stream.
-    error SablierLockupBase_StreamCanceled(uint256 streamId);
-
     /// @notice Thrown when trying to cancel, renounce, or withdraw from a depleted stream.
     error SablierLockupBase_StreamDepleted(uint256 streamId);
 
-    /// @notice Thrown when trying to cancel or renounce a stream that is not cancelable.
-    error SablierLockupBase_StreamNotCancelable(uint256 streamId);
-
     /// @notice Thrown when trying to burn a stream that is not depleted.
     error SablierLockupBase_StreamNotDepleted(uint256 streamId);
-
-    /// @notice Thrown when trying to cancel or renounce a settled stream.
-    error SablierLockupBase_StreamSettled(uint256 streamId);
 
     /// @notice Thrown when `msg.sender` lacks authorization to perform an action.
     error SablierLockupBase_Unauthorized(uint256 streamId, address caller);

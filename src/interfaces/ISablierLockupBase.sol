@@ -28,24 +28,6 @@ interface ISablierLockupBase is
     /// @param recipient The address of the recipient contract put on the allowlist.
     event AllowToHook(address indexed admin, address recipient);
 
-    /// @notice Emitted when a stream is canceled.
-    /// @param streamId The ID of the stream.
-    /// @param sender The address of the stream's sender.
-    /// @param recipient The address of the stream's recipient.
-    /// @param token The contract address of the ERC-20 token that has been distributed.
-    /// @param senderAmount The amount of tokens refunded to the stream's sender, denoted in units of the token's
-    /// decimals.
-    /// @param recipientAmount The amount of tokens left for the stream's recipient to withdraw, denoted in units of the
-    /// token's decimals.
-    event CancelLockupStream(
-        uint256 streamId,
-        address indexed sender,
-        address indexed recipient,
-        IERC20 indexed token,
-        uint128 senderAmount,
-        uint128 recipientAmount
-    );
-
     /// @notice Emitted when the accrued fees are collected.
     /// @param admin The address of the current contract admin, which has received the fees.
     /// @param feeAmount The amount of collected fees.
@@ -55,10 +37,6 @@ interface ISablierLockupBase is
     /// @param streamId The stream ID that reverted during withdraw.
     /// @param revertData The error data returned by the reverted withdraw.
     event InvalidWithdrawalInWithdrawMultiple(uint256 streamId, bytes revertData);
-
-    /// @notice Emitted when a sender gives up the right to cancel a stream.
-    /// @param streamId The ID of the stream.
-    event RenounceLockupStream(uint256 indexed streamId);
 
     /// @notice Emitted when the admin sets a new NFT descriptor contract.
     /// @param admin The address of the current contract admin.
@@ -135,12 +113,6 @@ interface ISablierLockupBase is
     /// @dev See {ISablierLockupRecipient} for more information.
     function isAllowedToHook(address recipient) external view returns (bool result);
 
-    /// @notice Retrieves a flag indicating whether the stream can be canceled. When the stream is cold, this
-    /// flag is always `false`.
-    /// @dev Reverts if `streamId` references a null stream.
-    /// @param streamId The stream ID for the query.
-    function isCancelable(uint256 streamId) external view returns (bool result);
-
     /// @notice Retrieves a flag indicating whether the stream is cold, i.e. settled, canceled, or depleted.
     /// @dev Reverts if `streamId` references a null stream.
     /// @param streamId The stream ID for the query.
@@ -194,11 +166,6 @@ interface ISablierLockupBase is
     /// @param streamId The stream ID for the query.
     function streamedAmountOf(uint256 streamId) external view returns (uint128 streamedAmount);
 
-    /// @notice Retrieves a flag indicating whether the stream was canceled.
-    /// @dev Reverts if `streamId` references a null stream.
-    /// @param streamId The stream ID for the query.
-    function wasCanceled(uint256 streamId) external view returns (bool result);
-
     /// @notice Calculates the amount that the recipient can withdraw from the stream, denoted in units of the token's
     /// decimals.
     /// @dev Reverts if `streamId` references a null stream.
@@ -239,36 +206,6 @@ interface ISablierLockupBase is
     /// @param streamId The ID of the stream NFT to burn.
     function burn(uint256 streamId) external payable;
 
-    /// @notice Cancels the stream and refunds any remaining tokens to the sender.
-    ///
-    /// @dev Emits a {Transfer}, {CancelLockupStream} and {MetadataUpdate} event.
-    ///
-    /// Notes:
-    /// - If there any tokens left for the recipient to withdraw, the stream is marked as canceled. Otherwise, the
-    /// stream is marked as depleted.
-    /// - If the address is on the allowlist, this function will invoke a hook on the recipient.
-    ///
-    /// Requirements:
-    /// - Must not be delegate called.
-    /// - The stream must be warm and cancelable.
-    /// - `msg.sender` must be the stream's sender.
-    ///
-    /// @param streamId The ID of the stream to cancel.
-    function cancel(uint256 streamId) external payable;
-
-    /// @notice Cancels multiple streams and refunds any remaining tokens to the sender.
-    ///
-    /// @dev Emits multiple {Transfer}, {CancelLockupStream} and {MetadataUpdate} events.
-    ///
-    /// Notes:
-    /// - Refer to the notes in {cancel}.
-    ///
-    /// Requirements:
-    /// - All requirements from {cancel} must be met for each stream.
-    ///
-    /// @param streamIds The IDs of the streams to cancel.
-    function cancelMultiple(uint256[] calldata streamIds) external payable;
-
     /// @notice Collects the accrued fees by transferring them to the contract admin.
     ///
     /// @dev Emits a {CollectFees} event.
@@ -276,35 +213,6 @@ interface ISablierLockupBase is
     /// Notes:
     /// - If the admin is a contract, it must be able to receive native token payments, e.g., ETH for Ethereum Mainnet.
     function collectFees() external;
-
-    /// @notice Removes the right of the stream's sender to cancel the stream.
-    ///
-    /// @dev Emits a {RenounceLockupStream} event.
-    ///
-    /// Notes:
-    /// - This is an irreversible operation.
-    ///
-    /// Requirements:
-    /// - Must not be delegate called.
-    /// - `streamId` must reference a warm stream.
-    /// - `msg.sender` must be the stream's sender.
-    /// - The stream must be cancelable.
-    ///
-    /// @param streamId The ID of the stream to renounce.
-    function renounce(uint256 streamId) external payable;
-
-    /// @notice Renounces multiple streams.
-    ///
-    /// @dev Emits multiple {RenounceLockupStream} events.
-    ///
-    /// Notes:
-    /// - Refer to the notes in {renounce}.
-    ///
-    /// Requirements:
-    /// - All requirements from {renounce} must be met for each stream.
-    ///
-    /// @param streamIds An array of stream IDs to renounce.
-    function renounceMultiple(uint256[] calldata streamIds) external payable;
 
     /// @notice Sets a new NFT descriptor contract, which produces the URI describing the Sablier stream NFTs.
     ///

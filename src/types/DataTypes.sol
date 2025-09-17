@@ -46,7 +46,6 @@ library Lockup {
     /// @param amounts Struct encapsulating (i) the deposit amount, and (ii) the broker fee amount, both denoted
     /// in units of the token's decimals.
     /// @param token The contract address of the ERC-20 token to be distributed.
-    /// @param cancelable Boolean indicating whether the stream is cancelable or not.
     /// @param transferable Boolean indicating whether the stream NFT is transferable or not.
     /// @param timestamps Struct encapsulating (i) the stream's start time and (ii) end time, all as Unix timestamps.
     /// @param shape An optional parameter to specify the shape of the distribution function. This helps differentiate
@@ -58,7 +57,6 @@ library Lockup {
         address recipient;
         Lockup.CreateAmounts amounts;
         IERC20 token;
-        bool cancelable;
         bool transferable;
         Lockup.Timestamps timestamps;
         string shape;
@@ -72,7 +70,6 @@ library Lockup {
     /// @param totalAmount The total amount, including the deposit and any broker fee, denoted in units of the token's
     /// decimals.
     /// @param token The contract address of the ERC-20 token to be distributed.
-    /// @param cancelable Indicates if the stream is cancelable.
     /// @param transferable Indicates if the stream NFT is transferable.
     /// @param shape An optional parameter to specify the shape of the distribution function. This helps differentiate
     /// streams in the UI.
@@ -83,7 +80,6 @@ library Lockup {
         address recipient;
         uint128 totalAmount;
         IERC20 token;
-        bool cancelable;
         bool transferable;
         string shape;
         Broker broker;
@@ -96,7 +92,6 @@ library Lockup {
     /// @param totalAmount The total amount, including the deposit and any broker fee, denoted in units of the token's
     /// decimals.
     /// @param token The contract address of the ERC-20 token to be distributed.
-    /// @param cancelable Indicates if the stream is cancelable.
     /// @param transferable Indicates if the stream NFT is transferable.
     /// @param timestamps Struct encapsulating (i) the stream's start time and (ii) end time, both as Unix timestamps.
     /// @param shape An optional parameter to specify the shape of the distribution function. This helps differentiate
@@ -108,7 +103,6 @@ library Lockup {
         address recipient;
         uint128 totalAmount;
         IERC20 token;
-        bool cancelable;
         bool transferable;
         Timestamps timestamps;
         string shape;
@@ -138,7 +132,6 @@ library Lockup {
         STREAMING,
         // Cold
         SETTLED,
-        CANCELED,
         DEPLETED
     }
 
@@ -147,7 +140,6 @@ library Lockup {
     /// @param sender The address distributing the tokens, with the ability to cancel the stream.
     /// @param startTime The Unix timestamp indicating the stream's start.
     /// @param endTime The Unix timestamp indicating the stream's end.
-    /// @param isCancelable Boolean indicating if the stream is cancelable.
     /// @param wasCanceled Boolean indicating if the stream was canceled.
     /// @param token The contract address of the ERC-20 token to be distributed.
     /// @param isDepleted Boolean indicating if the stream is depleted.
@@ -161,8 +153,6 @@ library Lockup {
         address sender;
         uint40 startTime;
         uint40 endTime;
-        bool isCancelable;
-        bool wasCanceled;
         // slot 1
         IERC20 token;
         bool isDepleted;
