@@ -2,7 +2,7 @@
 pragma solidity >=0.8.22;
 
 import { UD60x18, ud } from "@prb/math/src/UD60x18.sol";
-import { Lockup, LockupDynamic, LockupLinear, LockupTranched } from "./../types/DataTypes.sol";
+import { Lockup, LockupLinear, LockupTranched } from "./../types/DataTypes.sol";
 import { Errors } from "./Errors.sol";
 
 /// @title Helpers
@@ -11,39 +11,6 @@ library Helpers {
     /*//////////////////////////////////////////////////////////////////////////
                                 CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
-
-    /// @dev Calculate the timestamps and return the segments.
-    function calculateSegmentTimestamps(
-        LockupDynamic.SegmentWithDuration[] memory segmentsWithDuration,
-        uint40 startTime
-    )
-        public
-        pure
-        returns (LockupDynamic.Segment[] memory segmentsWithTimestamps)
-    {
-        uint256 segmentCount = segmentsWithDuration.length;
-        segmentsWithTimestamps = new LockupDynamic.Segment[](segmentCount);
-
-        // It is safe to use unchecked arithmetic because {SablierLockup._createLD} will nonetheless
-        // check the correctness of the calculated segment timestamps.
-        unchecked {
-            // The first segment is precomputed because it is needed in the for loop below.
-            segmentsWithTimestamps[0] = LockupDynamic.Segment({
-                amount: segmentsWithDuration[0].amount,
-                exponent: segmentsWithDuration[0].exponent,
-                timestamp: startTime + segmentsWithDuration[0].duration
-            });
-
-            // Copy the segment amounts and exponents, and calculate the segment timestamps.
-            for (uint256 i = 1; i < segmentCount; ++i) {
-                segmentsWithTimestamps[i] = LockupDynamic.Segment({
-                    amount: segmentsWithDuration[i].amount,
-                    exponent: segmentsWithDuration[i].exponent,
-                    timestamp: segmentsWithTimestamps[i - 1].timestamp + segmentsWithDuration[i].duration
-                });
-            }
-        }
-    }
 
     /// @dev Calculate the timestamps and return the tranches.
     function calculateTrancheTimestamps(
@@ -74,31 +41,6 @@ library Helpers {
                 });
             }
         }
-    }
-
-    /// @dev Checks the parameters of the {SablierLockup-_createLD} function.
-    function checkCreateLockupDynamic(
-        address sender,
-        Lockup.Timestamps memory timestamps,
-        uint128 totalAmount,
-        LockupDynamic.Segment[] memory segments,
-        uint256 maxCount,
-        UD60x18 brokerFee,
-        string memory shape,
-        UD60x18 maxBrokerFee
-    )
-        public
-        pure
-        returns (Lockup.CreateAmounts memory createAmounts)
-    {
-        // Check: verify the broker fee and calculate the amounts.
-        createAmounts = _checkAndCalculateBrokerFee(totalAmount, brokerFee, maxBrokerFee);
-
-        // Check: validate the user-provided common parameters.
-        _checkCreateStream(sender, createAmounts.deposit, timestamps.start, shape);
-
-        // Check: validate the user-provided segments.
-        _checkSegments(segments, createAmounts.deposit, timestamps, maxCount);
     }
 
     /// @dev Checks the parameters of the {SablierLockup-_createLL} function.
@@ -259,78 +201,6 @@ library Helpers {
         // Check: the shape is not greater than 32 bytes.
         if (bytes(shape).length > 32) {
             revert Errors.SablierHelpers_ShapeExceeds32Bytes(bytes(shape).length);
-        }
-    }
-
-    /// @dev Checks:
-    ///
-    /// 1. The first timestamp is strictly greater than the start time.
-    /// 2. The timestamps are ordered chronologically.
-    /// 3. There are no duplicate timestamps.
-    /// 4. The deposit amount is equal to the sum of all segment amounts.
-    /// 5. The end time equals the last segment's timestamp.
-    function _checkSegments(
-        LockupDynamic.Segment[] memory segments,
-        uint128 depositAmount,
-        Lockup.Timestamps memory timestamps,
-        uint256 maxSegmentCount
-    )
-        private
-        pure
-    {
-        // Check: the segment count is not zero.
-        uint256 segmentCount = segments.length;
-        if (segmentCount == 0) {
-            revert Errors.SablierHelpers_SegmentCountZero();
-        }
-
-        // Check: the segment count is not greater than the maximum allowed.
-        if (segmentCount > maxSegmentCount) {
-            revert Errors.SablierHelpers_SegmentCountTooHigh(segmentCount);
-        }
-
-        // Check: the start time is strictly less than the first segment timestamp.
-        if (timestamps.start >= segments[0].timestamp) {
-            revert Errors.SablierHelpers_StartTimeNotLessThanFirstSegmentTimestamp(
-                timestamps.start, segments[0].timestamp
-            );
-        }
-
-        // Check: the end time equals the last segment's timestamp.
-        if (timestamps.end != segments[segmentCount - 1].timestamp) {
-            revert Errors.SablierHelpers_EndTimeNotEqualToLastSegmentTimestamp(
-                timestamps.end, segments[segmentCount - 1].timestamp
-            );
-        }
-
-        // Pre-declare the variables needed in the for loop.
-        uint128 segmentAmountsSum;
-        uint40 currentSegmentTimestamp;
-        uint40 previousSegmentTimestamp;
-
-        // Iterate over the segments to:
-        //
-        // 1. Calculate the sum of all segment amounts.
-        // 2. Check that the timestamps are ordered.
-        for (uint256 index = 0; index < segmentCount; ++index) {
-            // Add the current segment amount to the sum.
-            segmentAmountsSum += segments[index].amount;
-
-            // Check: the current timestamp is strictly greater than the previous timestamp.
-            currentSegmentTimestamp = segments[index].timestamp;
-            if (currentSegmentTimestamp <= previousSegmentTimestamp) {
-                revert Errors.SablierHelpers_SegmentTimestampsNotOrdered(
-                    index, previousSegmentTimestamp, currentSegmentTimestamp
-                );
-            }
-
-            // Make the current timestamp the previous timestamp of the next loop iteration.
-            previousSegmentTimestamp = currentSegmentTimestamp;
-        }
-
-        // Check: the deposit amount is equal to the segment amounts sum.
-        if (depositAmount != segmentAmountsSum) {
-            revert Errors.SablierHelpers_DepositAmountNotEqualToSegmentAmountsSum(depositAmount, segmentAmountsSum);
         }
     }
 

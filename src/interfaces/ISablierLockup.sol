@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.22;
 
-import { Lockup, LockupDynamic, LockupLinear, LockupTranched } from "../types/DataTypes.sol";
+import { Lockup, LockupLinear, LockupTranched } from "../types/DataTypes.sol";
 import { ISablierLockupBase } from "./ISablierLockupBase.sol";
 
 /// @title ISablierLockup
@@ -10,14 +10,6 @@ interface ISablierLockup is ISablierLockupBase {
     /*//////////////////////////////////////////////////////////////////////////
                                        EVENTS
     //////////////////////////////////////////////////////////////////////////*/
-
-    /// @notice Emitted when a stream is created using Lockup dynamic model.
-    /// @param streamId The ID of the newly created stream.
-    /// @param commonParams Common parameters emitted in Create events across all Lockup models.
-    /// @param segments The segments the protocol uses to compose the dynamic distribution function.
-    event CreateLockupDynamicStream(
-        uint256 indexed streamId, Lockup.CreateEventCommon commonParams, LockupDynamic.Segment[] segments
-    );
 
     /// @notice Emitted when a stream is created using Lockup linear model.
     /// @param streamId The ID of the newly created stream.
@@ -44,12 +36,6 @@ interface ISablierLockup is ISablierLockupBase {
     /// @dev Reverts if `streamId` references a null stream or a non Lockup Linear stream.
     /// @param streamId The stream ID for the query.
     function getCliffTime(uint256 streamId) external view returns (uint40 cliffTime);
-
-    /// @notice Retrieves the segments used to compose the dynamic distribution function.
-    /// @dev Reverts if `streamId` references a null stream or a non Lockup Dynamic stream.
-    /// @param streamId The stream ID for the query.
-    /// @return segments See the documentation in {DataTypes}.
-    function getSegments(uint256 streamId) external view returns (LockupDynamic.Segment[] memory segments);
 
     /// @notice Retrieves the tranches used to compose the tranched distribution function.
     /// @dev Reverts if `streamId` references a null stream or a non Lockup Tranched stream.

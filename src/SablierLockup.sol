@@ -11,7 +11,7 @@ import { ISablierLockup } from "./interfaces/ISablierLockup.sol";
 import { Errors } from "./libraries/Errors.sol";
 import { Helpers } from "./libraries/Helpers.sol";
 import { VestingMath } from "./libraries/VestingMath.sol";
-import { Lockup, LockupDynamic, LockupLinear, LockupTranched } from "./types/DataTypes.sol";
+import { Lockup, LockupLinear, LockupTranched } from "./types/DataTypes.sol";
 
 /*
 
@@ -38,9 +38,6 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
 
     /// @dev Cliff timestamp mapped by stream IDs. This is used in Lockup Linear models.
     mapping(uint256 streamId => uint40 cliffTime) internal _cliffs;
-
-    /// @dev Stream segments mapped by stream IDs. This is used in Lockup Dynamic models.
-    mapping(uint256 streamId => LockupDynamic.Segment[] segments) internal _segments;
 
     /// @dev Stream tranches mapped by stream IDs. This is used in Lockup Tranched models.
     mapping(uint256 streamId => LockupTranched.Tranche[] tranches) internal _tranches;
@@ -79,21 +76,6 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
         }
 
         cliffTime = _cliffs[streamId];
-    }
-
-    /// @inheritdoc ISablierLockup
-    function getSegments(uint256 streamId)
-        external
-        view
-        override
-        notNull(streamId)
-        returns (LockupDynamic.Segment[] memory segments)
-    {
-        if (_streams[streamId].lockupModel != Lockup.Model.LOCKUP_DYNAMIC) {
-            revert Errors.SablierLockup_NotExpectedModel(_streams[streamId].lockupModel, Lockup.Model.LOCKUP_DYNAMIC);
-        }
-
-        segments = _segments[streamId];
     }
 
     /// @inheritdoc ISablierLockup
@@ -201,18 +183,8 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
         Lockup.Timestamps memory timestamps =
             Lockup.Timestamps({ start: _streams[streamId].startTime, end: _streams[streamId].endTime });
 
-        // Calculate the streamed amount for the Lockup Dynamic model.
-        if (lockupModel == Lockup.Model.LOCKUP_DYNAMIC) {
-            streamedAmount = VestingMath.calculateLockupDynamicStreamedAmount({
-                depositedAmount: depositedAmount,
-                segments: _segments[streamId],
-                blockTimestamp: blockTimestamp,
-                timestamps: timestamps,
-                withdrawnAmount: _streams[streamId].amounts.withdrawn
-            });
-        }
         // Calculate the streamed amount for the Lockup Linear model.
-        else if (lockupModel == Lockup.Model.LOCKUP_LINEAR) {
+        if (lockupModel == Lockup.Model.LOCKUP_LINEAR) {
             streamedAmount = VestingMath.calculateLockupLinearStreamedAmount({
                 depositedAmount: depositedAmount,
                 blockTimestamp: blockTimestamp,
