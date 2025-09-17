@@ -8,9 +8,7 @@ import { IERC721Metadata } from "@openzeppelin/contracts/token/ERC721/extensions
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 
-import { ILockupNFTDescriptor } from "./../interfaces/ILockupNFTDescriptor.sol";
 import { ISablierLockupBase } from "./../interfaces/ISablierLockupBase.sol";
-import { ISablierLockupRecipient } from "./../interfaces/ISablierLockupRecipient.sol";
 import { Errors } from "./../libraries/Errors.sol";
 import { Lockup } from "./../types/DataTypes.sol";
 import { Adminable } from "./Adminable.sol";
@@ -38,9 +36,6 @@ abstract contract SablierLockupBase is
     /// @inheritdoc ISablierLockupBase
     uint256 public override nextStreamId;
 
-    /// @inheritdoc ISablierLockupBase
-    ILockupNFTDescriptor public override nftDescriptor;
-
     /// @dev Lockup streams mapped by unsigned integers.
     mapping(uint256 id => Lockup.Stream stream) internal _streams;
 
@@ -49,9 +44,7 @@ abstract contract SablierLockupBase is
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @param initialAdmin The address of the initial contract admin.
-    /// @param initialNFTDescriptor The address of the initial NFT descriptor.
-    constructor(address initialAdmin, ILockupNFTDescriptor initialNFTDescriptor) Adminable(initialAdmin) {
-        nftDescriptor = initialNFTDescriptor;
+    constructor(address initialAdmin) Adminable(initialAdmin) {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -208,11 +201,7 @@ abstract contract SablierLockupBase is
 
     /// @inheritdoc ERC721
     function tokenURI(uint256 streamId) public view override(IERC721Metadata, ERC721) returns (string memory uri) {
-        // Check: the stream NFT exists.
-        _requireOwned({ tokenId: streamId });
-
-        // Generate the URI describing the stream NFT.
-        uri = nftDescriptor.tokenURI({ sablier: this, streamId: streamId });
+        return "Not implemented";
     }
 
     /// @inheritdoc ISablierLockupBase
@@ -249,23 +238,6 @@ abstract contract SablierLockupBase is
 
         // Effect: burn the NFT.
         _burn({ tokenId: streamId });
-    }
-
-    /// @inheritdoc ISablierLockupBase
-    function setNFTDescriptor(ILockupNFTDescriptor newNFTDescriptor) external override onlyAdmin {
-        // Effect: set the NFT descriptor.
-        ILockupNFTDescriptor oldNftDescriptor = nftDescriptor;
-        nftDescriptor = newNFTDescriptor;
-
-        // Log the change of the NFT descriptor.
-        emit ISablierLockupBase.SetNFTDescriptor({
-            admin: msg.sender,
-            oldNFTDescriptor: oldNftDescriptor,
-            newNFTDescriptor: newNFTDescriptor
-        });
-
-        // Refresh the NFT metadata for all streams.
-        emit BatchMetadataUpdate({ _fromTokenId: 1, _toTokenId: nextStreamId - 1 });
     }
 
     /// @inheritdoc ISablierLockupBase

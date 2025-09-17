@@ -9,7 +9,6 @@ import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 import { Lockup } from "../types/DataTypes.sol";
 import { IAdminable } from "./IAdminable.sol";
 import { IBatch } from "./IBatch.sol";
-import { ILockupNFTDescriptor } from "./ILockupNFTDescriptor.sol";
 
 /// @title ISablierLockupBase
 /// @notice Common logic between all Sablier Lockup contracts.
@@ -27,14 +26,6 @@ interface ISablierLockupBase is
     /// @param streamId The stream ID that reverted during withdraw.
     /// @param revertData The error data returned by the reverted withdraw.
     event InvalidWithdrawalInWithdrawMultiple(uint256 streamId, bytes revertData);
-
-    /// @notice Emitted when the admin sets a new NFT descriptor contract.
-    /// @param admin The address of the current contract admin.
-    /// @param oldNFTDescriptor The address of the old NFT descriptor contract.
-    /// @param newNFTDescriptor The address of the new NFT descriptor contract.
-    event SetNFTDescriptor(
-        address indexed admin, ILockupNFTDescriptor oldNFTDescriptor, ILockupNFTDescriptor newNFTDescriptor
-    );
 
     /// @notice Emitted when tokens are withdrawn from a stream.
     /// @param streamId The ID of the stream.
@@ -126,9 +117,6 @@ interface ISablierLockupBase is
     /// @notice Counter for stream IDs, used in the create functions.
     function nextStreamId() external view returns (uint256);
 
-    /// @notice Contract that generates the non-fungible token URI.
-    function nftDescriptor() external view returns (ILockupNFTDescriptor);
-
     /// @notice Calculates the amount that the sender would be refunded if the stream were canceled, denoted in units
     /// of the token's decimals.
     /// @dev Reverts if `streamId` references a null stream.
@@ -173,19 +161,6 @@ interface ISablierLockupBase is
     ///
     /// @param streamId The ID of the stream NFT to burn.
     function burn(uint256 streamId) external payable;
-
-    /// @notice Sets a new NFT descriptor contract, which produces the URI describing the Sablier stream NFTs.
-    ///
-    /// @dev Emits a {SetNFTDescriptor} and {BatchMetadataUpdate} event.
-    ///
-    /// Notes:
-    /// - Does not revert if the NFT descriptor is the same.
-    ///
-    /// Requirements:
-    /// - `msg.sender` must be the contract admin.
-    ///
-    /// @param newNFTDescriptor The address of the new NFT descriptor contract.
-    function setNFTDescriptor(ILockupNFTDescriptor newNFTDescriptor) external;
 
     /// @notice Withdraws the provided amount of tokens from the stream to the `to` address.
     ///

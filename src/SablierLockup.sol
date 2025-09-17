@@ -6,7 +6,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import { SablierLockupBase } from "./abstracts/SablierLockupBase.sol";
-import { ILockupNFTDescriptor } from "./interfaces/ILockupNFTDescriptor.sol";
 import { ISablierLockup } from "./interfaces/ISablierLockup.sol";
 import { Errors } from "./libraries/Errors.sol";
 import { Helpers } from "./libraries/Helpers.sol";
@@ -50,16 +49,14 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @param initialAdmin The address of the initial contract admin.
-    /// @param initialNFTDescriptor The address of the NFT descriptor contract.
     /// @param maxCount The maximum number of segments and tranched allowed in Lockup Dynamic and Lockup Tranched
     /// models, respectively.
     constructor(
         address initialAdmin,
-        ILockupNFTDescriptor initialNFTDescriptor,
         uint256 maxCount
     )
         ERC721("Sablier Lockup NFT", "SAB-LOCKUP")
-        SablierLockupBase(initialAdmin, initialNFTDescriptor)
+        SablierLockupBase(initialAdmin)
     {
         MAX_COUNT = maxCount;
         nextStreamId = 1;
