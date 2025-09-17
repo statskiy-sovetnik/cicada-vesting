@@ -154,6 +154,44 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
     }
 
     /// @inheritdoc ISablierLockup
+    function createWithDurationsLT(
+        Lockup.CreateWithDurations calldata params,
+        LockupTranched.TrancheWithDuration[] calldata tranchesWithDuration
+    )
+        external
+        payable
+        override
+        noDelegateCall
+        returns (uint256 streamId)
+    {
+        // Use the block timestamp as the start time.
+        uint40 startTime = uint40(block.timestamp);
+
+        // Generate the canonical tranches.
+        LockupTranched.Tranche[] memory tranches = Helpers.calculateTrancheTimestamps(tranchesWithDuration, startTime);
+
+        // Declare the timestamps for the stream.
+        Lockup.Timestamps memory timestamps =
+            Lockup.Timestamps({ start: startTime, end: tranches[tranches.length - 1].timestamp });
+
+        // Checks, Effects and Interactions: create the stream.
+        streamId = _createLT(
+            Lockup.CreateWithTimestamps({
+                sender: params.sender,
+                recipient: params.recipient,
+                totalAmount: params.totalAmount,
+                token: params.token,
+                cancelable: params.cancelable,
+                transferable: params.transferable,
+                timestamps: timestamps,
+                shape: params.shape,
+                broker: params.broker
+            }),
+            tranches
+        );
+    }
+
+    /// @inheritdoc ISablierLockup
     function createWithTimestampsLL(
         Lockup.CreateWithTimestamps calldata params,
         LockupLinear.UnlockAmounts calldata unlockAmounts,
@@ -167,6 +205,21 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
     {
         // Checks, Effects and Interactions: create the stream.
         streamId = _createLL(params, unlockAmounts, cliffTime);
+    }
+
+    /// @inheritdoc ISablierLockup
+    function createWithTimestampsLT(
+        Lockup.CreateWithTimestamps calldata params,
+        LockupTranched.Tranche[] calldata tranches
+    )
+        external
+        payable
+        override
+        noDelegateCall
+        returns (uint256 streamId)
+    {
+        // Checks, Effects and Interactions: create the stream.
+        streamId = _createLT(params, tranches);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -320,6 +373,53 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
             commonParams: commonParams,
             cliffTime: cliffTime,
             unlockAmounts: unlockAmounts
+        });
+    }
+
+
+    /// @dev See the documentation for the user-facing functions that call this internal function.
+    function _createLT(
+        Lockup.CreateWithTimestamps memory params,
+        LockupTranched.Tranche[] memory tranches
+    )
+        internal
+        returns (uint256 streamId)
+    {
+        // Check: validate the user-provided parameters and tranches.
+        Lockup.CreateAmounts memory createAmounts = Helpers.checkCreateLockupTranched({
+            sender: params.sender,
+            timestamps: params.timestamps,
+            totalAmount: params.totalAmount,
+            tranches: tranches,
+            maxCount: MAX_COUNT,
+            brokerFee: params.broker.fee,
+            shape: params.shape,
+            maxBrokerFee: MAX_BROKER_FEE
+        });
+
+        // Load the stream ID in a variable.
+        streamId = nextStreamId;
+
+        // Effect: store the tranches. Since Solidity lacks a syntax for copying arrays of structs directly from
+        // memory to storage, a manual approach is necessary. See https://github.com/ethereum/solidity/issues/12783.
+        uint256 trancheCount = tranches.length;
+        for (uint256 i = 0; i < trancheCount; ++i) {
+            _tranches[streamId].push(tranches[i]);
+        }
+
+        // Effect: create the stream,  mint the NFT and transfer the deposit amount.
+        Lockup.CreateEventCommon memory commonParams = _create({
+            streamId: streamId,
+            params: params,
+            createAmounts: createAmounts,
+            lockupModel: Lockup.Model.LOCKUP_TRANCHED
+        });
+
+        // Log the newly created stream.
+        emit ISablierLockup.CreateLockupTranchedStream({
+            streamId: streamId,
+            commonParams: commonParams,
+            tranches: tranches
         });
     }
 }
