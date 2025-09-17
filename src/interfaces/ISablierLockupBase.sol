@@ -23,16 +23,6 @@ interface ISablierLockupBase is
                                        EVENTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @notice Emitted when the admin allows a new recipient contract to hook to Sablier.
-    /// @param admin The address of the current contract admin.
-    /// @param recipient The address of the recipient contract put on the allowlist.
-    event AllowToHook(address indexed admin, address recipient);
-
-    /// @notice Emitted when the accrued fees are collected.
-    /// @param admin The address of the current contract admin, which has received the fees.
-    /// @param feeAmount The amount of collected fees.
-    event CollectFees(address indexed admin, uint256 indexed feeAmount);
-
     /// @notice Emitted when withdrawing from multiple streams and one particular withdrawal reverts.
     /// @param streamId The stream ID that reverted during withdraw.
     /// @param revertData The error data returned by the reverted withdraw.
@@ -108,11 +98,6 @@ interface ISablierLockupBase is
     /// @param streamId The stream ID for the query.
     function getWithdrawnAmount(uint256 streamId) external view returns (uint128 withdrawnAmount);
 
-    /// @notice Retrieves a flag indicating whether the provided address is a contract allowed to hook to Sablier
-    /// when a stream is canceled or when tokens are withdrawn.
-    /// @dev See {ISablierLockupRecipient} for more information.
-    function isAllowedToHook(address recipient) external view returns (bool result);
-
     /// @notice Retrieves a flag indicating whether the stream is cold, i.e. settled, canceled, or depleted.
     /// @dev Reverts if `streamId` references a null stream.
     /// @param streamId The stream ID for the query.
@@ -176,23 +161,6 @@ interface ISablierLockupBase is
                                NON-CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @notice Allows a recipient contract to hook to Sablier when a stream is canceled or when tokens are withdrawn.
-    /// Useful for implementing contracts that hold streams on behalf of users, such as vaults or staking contracts.
-    ///
-    /// @dev Emits an {AllowToHook} event.
-    ///
-    /// Notes:
-    /// - Does not revert if the contract is already on the allowlist.
-    /// - This is an irreversible operation. The contract cannot be removed from the allowlist.
-    ///
-    /// Requirements:
-    /// - `msg.sender` must be the contract admin.
-    /// - `recipient` must have a non-zero code size.
-    /// - `recipient` must implement {ISablierLockupRecipient}.
-    ///
-    /// @param recipient The address of the contract to allow for hooks.
-    function allowToHook(address recipient) external;
-
     /// @notice Burns the NFT associated with the stream.
     ///
     /// @dev Emits a {Transfer} and {MetadataUpdate} event.
@@ -205,14 +173,6 @@ interface ISablierLockupBase is
     ///
     /// @param streamId The ID of the stream NFT to burn.
     function burn(uint256 streamId) external payable;
-
-    /// @notice Collects the accrued fees by transferring them to the contract admin.
-    ///
-    /// @dev Emits a {CollectFees} event.
-    ///
-    /// Notes:
-    /// - If the admin is a contract, it must be able to receive native token payments, e.g., ETH for Ethereum Mainnet.
-    function collectFees() external;
 
     /// @notice Sets a new NFT descriptor contract, which produces the URI describing the Sablier stream NFTs.
     ///

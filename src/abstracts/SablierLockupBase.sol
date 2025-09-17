@@ -41,9 +41,6 @@ abstract contract SablierLockupBase is
     /// @inheritdoc ISablierLockupBase
     ILockupNFTDescriptor public override nftDescriptor;
 
-    /// @dev Mapping of contracts allowed to hook to Sablier when a stream is canceled or when tokens are withdrawn.
-    mapping(address recipient => bool allowed) internal _allowedToHook;
-
     /// @dev Lockup streams mapped by unsigned integers.
     mapping(uint256 id => Lockup.Stream stream) internal _streams;
 
@@ -144,11 +141,6 @@ abstract contract SablierLockupBase is
     }
 
     /// @inheritdoc ISablierLockupBase
-    function isAllowedToHook(address recipient) external view returns (bool result) {
-        result = _allowedToHook[recipient];
-    }
-
-    /// @inheritdoc ISablierLockupBase
     function isCold(uint256 streamId) external view override notNull(streamId) returns (bool result) {
         Lockup.Status status = _statusOf(streamId);
         result = status == Lockup.Status.SETTLED || status == Lockup.Status.DEPLETED;
@@ -239,26 +231,6 @@ abstract contract SablierLockupBase is
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc ISablierLockupBase
-    function allowToHook(address recipient) external override onlyAdmin {
-        // Check: non-zero code size.
-        if (recipient.code.length == 0) {
-            revert Errors.SablierLockupBase_AllowToHookZeroCodeSize(recipient);
-        }
-
-        // Check: recipients implements the ERC-165 interface ID required by {ISablierLockupRecipient}.
-        bytes4 interfaceId = type(ISablierLockupRecipient).interfaceId;
-        if (!ISablierLockupRecipient(recipient).supportsInterface(interfaceId)) {
-            revert Errors.SablierLockupBase_AllowToHookUnsupportedInterface(recipient);
-        }
-
-        // Effect: put the recipient on the allowlist.
-        _allowedToHook[recipient] = true;
-
-        // Log the allowlist addition.
-        emit ISablierLockupBase.AllowToHook({ admin: msg.sender, recipient: recipient });
-    }
-
-    /// @inheritdoc ISablierLockupBase
     function burn(uint256 streamId) external payable override noDelegateCall notNull(streamId) {
         // Check: only depleted streams can be burned.
         if (!_streams[streamId].isDepleted) {
@@ -277,22 +249,6 @@ abstract contract SablierLockupBase is
 
         // Effect: burn the NFT.
         _burn({ tokenId: streamId });
-    }
-
-    /// @inheritdoc ISablierLockupBase
-    function collectFees() external override {
-        uint256 feeAmount = address(this).balance;
-
-        // Effect: transfer the fees to the admin.
-        (bool success,) = admin.call{ value: feeAmount }("");
-
-        // Revert if the call failed.
-        if (!success) {
-            revert Errors.SablierLockupBase_FeeTransferFail(admin, feeAmount);
-        }
-
-        // Log the fee withdrawal.
-        emit ISablierLockupBase.CollectFees({ admin: admin, feeAmount: feeAmount });
     }
 
     /// @inheritdoc ISablierLockupBase
@@ -359,21 +315,6 @@ abstract contract SablierLockupBase is
 
         // Emit an ERC-4906 event to trigger an update of the NFT metadata.
         emit MetadataUpdate({ _tokenId: streamId });
-
-        // Interaction: if `msg.sender` is not the recipient and the recipient is on the allowlist, run the hook.
-        if (msg.sender != recipient && _allowedToHook[recipient]) {
-            bytes4 selector = ISablierLockupRecipient(recipient).onSablierLockupWithdraw({
-                streamId: streamId,
-                caller: msg.sender,
-                to: to,
-                amount: amount
-            });
-
-            // Check: the recipient's hook returned the correct selector.
-            if (selector != ISablierLockupRecipient.onSablierLockupWithdraw.selector) {
-                revert Errors.SablierLockupBase_InvalidHookSelector(recipient);
-            }
-        }
     }
 
     /// @inheritdoc ISablierLockupBase
