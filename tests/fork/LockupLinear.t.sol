@@ -175,7 +175,6 @@ abstract contract Lockup_Linear_Fork_Test is Fork_Test {
                 recipient: params.recipient,
                 amounts: vars.createAmounts,
                 token: FORK_TOKEN,
-                cancelable: true,
                 transferable: true,
                 timestamps: params.timestamps,
                 shape: "Linear Shape",
@@ -192,7 +191,6 @@ abstract contract Lockup_Linear_Fork_Test is Fork_Test {
                 recipient: params.recipient,
                 totalAmount: params.totalAmount,
                 token: FORK_TOKEN,
-                cancelable: true,
                 transferable: true,
                 timestamps: params.timestamps,
                 shape: "Linear Shape",
@@ -222,7 +220,6 @@ abstract contract Lockup_Linear_Fork_Test is Fork_Test {
         // Assert that the stream has been created.
         assertEq(lockup.getCliffTime(vars.streamId), params.cliffTime, "cliffTime");
         assertEq(lockup.getDepositedAmount(vars.streamId), vars.createAmounts.deposit, "depositedAmount");
-        assertEq(lockup.isCancelable(vars.streamId), vars.isCancelable, "isCancelable");
         assertFalse(lockup.isDepleted(vars.streamId), "isDepleted");
         assertTrue(lockup.isStream(vars.streamId), "isStream");
         assertTrue(lockup.isTransferable(vars.streamId), "isTransferable");
@@ -233,7 +230,6 @@ abstract contract Lockup_Linear_Fork_Test is Fork_Test {
         assertEq(lockup.getUnderlyingToken(vars.streamId), FORK_TOKEN, "underlyingToken");
         assertEq(lockup.getUnlockAmounts(vars.streamId).start, params.unlockAmounts.start, "unlockAmounts.start");
         assertEq(lockup.getUnlockAmounts(vars.streamId).cliff, params.unlockAmounts.cliff, "unlockAmounts.cliff");
-        assertFalse(lockup.wasCanceled(vars.streamId), "wasCanceled");
 
         // Assert that the stream's status is correct.
         vars.actualStatus = lockup.statusOf(vars.streamId);
@@ -356,64 +352,5 @@ abstract contract Lockup_Linear_Fork_Test is Fork_Test {
             vars.expectedRecipientBalance = vars.initialRecipientBalance + uint256(params.withdrawAmount);
             assertEq(vars.actualRecipientBalance, vars.expectedRecipientBalance, "post-withdraw Recipient balance");
         }
-
-        /*//////////////////////////////////////////////////////////////////////////
-                                          CANCEL
-        //////////////////////////////////////////////////////////////////////////*/
-
-        // Only run the cancel tests if the stream is neither depleted nor settled.
-        if (!vars.isDepleted && !vars.isSettled) {
-            // Load the pre-cancel token balances.
-            vars.balances = getTokenBalances(
-                address(FORK_TOKEN), Solarray.addresses(address(lockup), params.sender, params.recipient)
-            );
-            vars.initialLockupBalance = vars.balances[0];
-            vars.initialSenderBalance = vars.balances[1];
-            vars.initialRecipientBalance = vars.balances[2];
-
-            // Expect the relevant events to be emitted.
-            vm.expectEmit({ emitter: address(lockup) });
-            vars.senderAmount = lockup.refundableAmountOf(vars.streamId);
-            vars.recipientAmount = lockup.withdrawableAmountOf(vars.streamId);
-            emit ISablierLockupBase.CancelLockupStream(
-                vars.streamId, params.sender, params.recipient, FORK_TOKEN, vars.senderAmount, vars.recipientAmount
-            );
-            vm.expectEmit({ emitter: address(lockup) });
-            emit IERC4906.MetadataUpdate({ _tokenId: vars.streamId });
-
-            // Cancel the stream.
-            resetPrank({ msgSender: params.sender });
-            lockup.cancel(vars.streamId);
-
-            // Assert that the stream's status is correct.
-            vars.actualStatus = lockup.statusOf(vars.streamId);
-            vars.expectedStatus = vars.recipientAmount > 0 ? Lockup.Status.CANCELED : Lockup.Status.DEPLETED;
-            assertEq(vars.actualStatus, vars.expectedStatus, "post-cancel stream status");
-
-            // Load the post-cancel token balances.
-            vars.balances = getTokenBalances(
-                address(FORK_TOKEN), Solarray.addresses(address(lockup), params.sender, params.recipient)
-            );
-            vars.actualLockupBalance = vars.balances[0];
-            vars.actualSenderBalance = vars.balances[1];
-            vars.actualRecipientBalance = vars.balances[2];
-
-            // Assert that the contract's balance has been updated.
-            vars.expectedLockupBalance = vars.initialLockupBalance - uint256(vars.senderAmount);
-            assertEq(vars.actualLockupBalance, vars.expectedLockupBalance, "post-cancel Lockup balance");
-
-            // Assert that the Sender's balance has been updated.
-            vars.expectedSenderBalance = vars.initialSenderBalance + uint256(vars.senderAmount);
-            assertEq(vars.actualSenderBalance, vars.expectedSenderBalance, "post-cancel Sender balance");
-
-            // Assert that the Recipient's balance has not changed.
-            vars.expectedRecipientBalance = vars.initialRecipientBalance;
-            assertEq(vars.actualRecipientBalance, vars.expectedRecipientBalance, "post-cancel Recipient balance");
-        }
-
-        // Assert that the not burned NFT.
-        vars.actualNFTOwner = lockup.ownerOf({ tokenId: vars.streamId });
-        vars.expectedNFTOwner = params.recipient;
-        assertEq(vars.actualNFTOwner, vars.expectedNFTOwner, "post-cancel NFT owner");
     }
 }
