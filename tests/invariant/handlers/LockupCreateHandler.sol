@@ -56,6 +56,7 @@ contract LockupCreateHandler is BaseHandler, Calculations {
 
         // Create the stream.
         params.token = token;
+        params.transferable = true;
         params.shape = "Linear Stream";
         uint256 streamId = lockup.createWithDurationsLL(params, unlockAmounts, durations);
 
@@ -89,6 +90,7 @@ contract LockupCreateHandler is BaseHandler, Calculations {
 
         // Create the stream.
         params.token = token;
+        params.transferable = true;
         params.shape = "Linear Stream";
         uint256 streamId = lockup.createWithTimestampsLL(params, unlockAmounts, cliffTime);
 
