@@ -100,3 +100,4 @@
   mainnet = "${MAINNET_RPC_URL}"
   sepolia = "${SEPOLIA_RPC_URL}"
   duckchain = "https://rpc.duckchain.io"
+  duckchain_testnet = "https://testnet-rpc.duckchain.io"
