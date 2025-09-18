@@ -46,7 +46,7 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
                                      CONSTRUCTOR
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @param maxCount The maximum number of segments allowed in Lockup Dynamic models.
+    /// @param maxCount The maximum count parameter for Lockup stream validation.
     constructor(
         uint256 maxCount
     )

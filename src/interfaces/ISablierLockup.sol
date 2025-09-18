@@ -29,7 +29,7 @@ interface ISablierLockup is ISablierLockupBase {
                                  CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @notice The maximum number of segments allowed in Dynamic streams.
+    /// @notice The maximum count parameter for stream validation.
     /// @dev This is initialized at construction time and cannot be changed later.
     function MAX_COUNT() external view returns (uint256);
 
