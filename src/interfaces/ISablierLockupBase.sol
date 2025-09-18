@@ -7,14 +7,10 @@ import { IERC721Metadata } from "@openzeppelin/contracts/token/ERC721/extensions
 import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 
 import { Lockup } from "../types/DataTypes.sol";
-import { IAdminable } from "./IAdminable.sol";
-import { IBatch } from "./IBatch.sol";
 
 /// @title ISablierLockupBase
 /// @notice Common logic between all Sablier Lockup contracts.
 interface ISablierLockupBase is
-    IAdminable, // 0 inherited components
-    IBatch, // 0 inherited components
     IERC4906, // 2 inherited components
     IERC721Metadata // 2 inherited components
 {
@@ -63,17 +59,6 @@ interface ISablierLockupBase is
     /// @param streamId The stream ID for the query.
     function getRecipient(uint256 streamId) external view returns (address recipient);
 
-    /// @notice Retrieves the amount refunded to the sender after a cancellation, denoted in units of the token's
-    /// decimals. This amount is always zero unless the stream was canceled.
-    /// @dev Reverts if `streamId` references a null stream.
-    /// @param streamId The stream ID for the query.
-    function getRefundedAmount(uint256 streamId) external view returns (uint128 refundedAmount);
-
-    /// @notice Retrieves the stream's sender.
-    /// @dev Reverts if `streamId` references a null stream.
-    /// @param streamId The stream ID for the query.
-    function getSender(uint256 streamId) external view returns (address sender);
-
     /// @notice Retrieves the stream's start time, which is a Unix timestamp.
     /// @dev Reverts if `streamId` references a null stream.
     /// @param streamId The stream ID for the query.
@@ -89,11 +74,6 @@ interface ISablierLockupBase is
     /// @param streamId The stream ID for the query.
     function getWithdrawnAmount(uint256 streamId) external view returns (uint128 withdrawnAmount);
 
-    /// @notice Retrieves a flag indicating whether the stream is cold, i.e. settled, canceled, or depleted.
-    /// @dev Reverts if `streamId` references a null stream.
-    /// @param streamId The stream ID for the query.
-    function isCold(uint256 streamId) external view returns (bool result);
-
     /// @notice Retrieves a flag indicating whether the stream is depleted.
     /// @dev Reverts if `streamId` references a null stream.
     /// @param streamId The stream ID for the query.
@@ -104,24 +84,8 @@ interface ISablierLockupBase is
     /// @param streamId The stream ID for the query.
     function isStream(uint256 streamId) external view returns (bool result);
 
-    /// @notice Retrieves a flag indicating whether the stream NFT can be transferred.
-    /// @dev Reverts if `streamId` references a null stream.
-    /// @param streamId The stream ID for the query.
-    function isTransferable(uint256 streamId) external view returns (bool result);
-
-    /// @notice Retrieves a flag indicating whether the stream is warm, i.e. either pending or streaming.
-    /// @dev Reverts if `streamId` references a null stream.
-    /// @param streamId The stream ID for the query.
-    function isWarm(uint256 streamId) external view returns (bool result);
-
     /// @notice Counter for stream IDs, used in the create functions.
     function nextStreamId() external view returns (uint256);
-
-    /// @notice Calculates the amount that the sender would be refunded if the stream were canceled, denoted in units
-    /// of the token's decimals.
-    /// @dev Reverts if `streamId` references a null stream.
-    /// @param streamId The stream ID for the query.
-    function refundableAmountOf(uint256 streamId) external view returns (uint128 refundableAmount);
 
     /// @notice Retrieves the stream's status.
     /// @dev Reverts if `streamId` references a null stream.
@@ -221,22 +185,4 @@ interface ISablierLockupBase is
         external
         payable
         returns (uint128 withdrawnAmount);
-
-    /// @notice Withdraws tokens from streams to the recipient of each stream.
-    ///
-    /// @dev Emits multiple {Transfer}, {WithdrawFromLockupStream} and {MetadataUpdate} events. For each stream that
-    /// reverted the withdrawal, it emits an {InvalidWithdrawalInWithdrawMultiple} event.
-    ///
-    /// Notes:
-    /// - This function attempts to call a hook on the recipient of each stream, unless `msg.sender` is the recipient.
-    ///
-    /// Requirements:
-    /// - Must not be delegate called.
-    /// - There must be an equal number of `streamIds` and `amounts`.
-    /// - Each stream ID in the array must not reference a null or depleted stream.
-    /// - Each amount in the array must be greater than zero and must not exceed the withdrawable amount.
-    ///
-    /// @param streamIds The IDs of the streams to withdraw from.
-    /// @param amounts The amounts to withdraw, denoted in units of the token's decimals.
-    function withdrawMultiple(uint256[] calldata streamIds, uint128[] calldata amounts) external payable;
 }

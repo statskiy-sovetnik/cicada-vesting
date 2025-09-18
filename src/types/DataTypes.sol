@@ -112,9 +112,7 @@ library Lockup {
     /// @notice Enum representing the different distribution models used to create lockup streams.
     /// @dev These distribution models determine the vesting function used in the calculations of the unlocked tokens.
     enum Model {
-        LOCKUP_LINEAR,
-        LOCKUP_DYNAMIC,
-        LOCKUP_TRANCHED
+        LOCKUP_LINEAR
     }
 
     /// @notice Enum representing the different statuses of a stream.
@@ -191,25 +189,5 @@ library LockupLinear {
         // slot 0
         uint128 start;
         uint128 cliff;
-    }
-}
-
-/// @notice Namespace for the structs used only in Lockup Tranched model.
-library LockupTranched {
-    /// @notice Tranche struct to be stored in the Lockup Tranched model.
-    /// @param amount The amount of tokens to be unlocked in the tranche, denoted in units of the token's decimals.
-    /// @param timestamp The Unix timestamp indicating the tranche's end.
-    struct Tranche {
-        // slot 0
-        uint128 amount;
-        uint40 timestamp;
-    }
-
-    /// @notice Tranche struct used at runtime in {SablierLockup.createWithDurationsLT} function.
-    /// @param amount The amount of tokens to be unlocked in the tranche, denoted in units of the token's decimals.
-    /// @param duration The time difference in seconds between the tranche and the previous one.
-    struct TrancheWithDuration {
-        uint128 amount;
-        uint40 duration;
     }
 }

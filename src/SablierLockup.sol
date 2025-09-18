@@ -10,7 +10,7 @@ import { ISablierLockup } from "./interfaces/ISablierLockup.sol";
 import { Errors } from "./libraries/Errors.sol";
 import { Helpers } from "./libraries/Helpers.sol";
 import { VestingMath } from "./libraries/VestingMath.sol";
-import { Lockup, LockupLinear, LockupTranched } from "./types/DataTypes.sol";
+import { Lockup, LockupLinear } from "./types/DataTypes.sol";
 
 /*
 
@@ -38,8 +38,6 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
     /// @dev Cliff timestamp mapped by stream IDs. This is used in Lockup Linear models.
     mapping(uint256 streamId => uint40 cliffTime) internal _cliffs;
 
-    /// @dev Stream tranches mapped by stream IDs. This is used in Lockup Tranched models.
-    mapping(uint256 streamId => LockupTranched.Tranche[] tranches) internal _tranches;
 
     /// @dev Unlock amounts mapped by stream IDs. This is used in Lockup Linear models.
     mapping(uint256 streamId => LockupLinear.UnlockAmounts unlockAmounts) internal _unlockAmounts;
@@ -48,15 +46,12 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
                                      CONSTRUCTOR
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @param initialAdmin The address of the initial contract admin.
-    /// @param maxCount The maximum number of segments and tranched allowed in Lockup Dynamic and Lockup Tranched
-    /// models, respectively.
+    /// @param maxCount The maximum number of segments allowed in Lockup Dynamic models.
     constructor(
-        address initialAdmin,
         uint256 maxCount
     )
         ERC721("Sablier Lockup NFT", "SAB-LOCKUP")
-        SablierLockupBase(initialAdmin)
+        SablierLockupBase()
     {
         MAX_COUNT = maxCount;
         nextStreamId = 1;
@@ -75,20 +70,6 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
         cliffTime = _cliffs[streamId];
     }
 
-    /// @inheritdoc ISablierLockup
-    function getTranches(uint256 streamId)
-        external
-        view
-        override
-        notNull(streamId)
-        returns (LockupTranched.Tranche[] memory tranches)
-    {
-        if (_streams[streamId].lockupModel != Lockup.Model.LOCKUP_TRANCHED) {
-            revert Errors.SablierLockup_NotExpectedModel(_streams[streamId].lockupModel, Lockup.Model.LOCKUP_TRANCHED);
-        }
-
-        tranches = _tranches[streamId];
-    }
 
     /// @inheritdoc ISablierLockup
     function getUnlockAmounts(uint256 streamId)
@@ -149,42 +130,6 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
         );
     }
 
-    /// @inheritdoc ISablierLockup
-    function createWithDurationsLT(
-        Lockup.CreateWithDurations calldata params,
-        LockupTranched.TrancheWithDuration[] calldata tranchesWithDuration
-    )
-        external
-        payable
-        override
-        noDelegateCall
-        returns (uint256 streamId)
-    {
-        // Use the block timestamp as the start time.
-        uint40 startTime = uint40(block.timestamp);
-
-        // Generate the canonical tranches.
-        LockupTranched.Tranche[] memory tranches = Helpers.calculateTrancheTimestamps(tranchesWithDuration, startTime);
-
-        // Declare the timestamps for the stream.
-        Lockup.Timestamps memory timestamps =
-            Lockup.Timestamps({ start: startTime, end: tranches[tranches.length - 1].timestamp });
-
-        // Checks, Effects and Interactions: create the stream.
-        streamId = _createLT(
-            Lockup.CreateWithTimestamps({
-                sender: params.sender,
-                recipient: params.recipient,
-                totalAmount: params.totalAmount,
-                token: params.token,
-                transferable: params.transferable,
-                timestamps: timestamps,
-                shape: params.shape,
-                broker: params.broker
-            }),
-            tranches
-        );
-    }
 
     /// @inheritdoc ISablierLockup
     function createWithTimestampsLL(
@@ -202,20 +147,6 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
         streamId = _createLL(params, unlockAmounts, cliffTime);
     }
 
-    /// @inheritdoc ISablierLockup
-    function createWithTimestampsLT(
-        Lockup.CreateWithTimestamps calldata params,
-        LockupTranched.Tranche[] calldata tranches
-    )
-        external
-        payable
-        override
-        noDelegateCall
-        returns (uint256 streamId)
-    {
-        // Checks, Effects and Interactions: create the stream.
-        streamId = _createLT(params, tranches);
-    }
 
     /*//////////////////////////////////////////////////////////////////////////
                            INTERNAL CONSTANT FUNCTIONS
@@ -232,25 +163,14 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
             Lockup.Timestamps({ start: _streams[streamId].startTime, end: _streams[streamId].endTime });
 
         // Calculate the streamed amount for the Lockup Linear model.
-        if (lockupModel == Lockup.Model.LOCKUP_LINEAR) {
-            streamedAmount = VestingMath.calculateLockupLinearStreamedAmount({
-                depositedAmount: depositedAmount,
-                blockTimestamp: blockTimestamp,
-                timestamps: timestamps,
-                cliffTime: _cliffs[streamId],
-                unlockAmounts: _unlockAmounts[streamId],
-                withdrawnAmount: _streams[streamId].amounts.withdrawn
-            });
-        }
-        // Calculate the streamed amount for the Lockup Tranched model.
-        else if (lockupModel == Lockup.Model.LOCKUP_TRANCHED) {
-            streamedAmount = VestingMath.calculateLockupTranchedStreamedAmount({
-                depositedAmount: depositedAmount,
-                blockTimestamp: blockTimestamp,
-                timestamps: timestamps,
-                tranches: _tranches[streamId]
-            });
-        }
+        streamedAmount = VestingMath.calculateLockupLinearStreamedAmount({
+            depositedAmount: depositedAmount,
+            blockTimestamp: blockTimestamp,
+            timestamps: timestamps,
+            cliffTime: _cliffs[streamId],
+            unlockAmounts: _unlockAmounts[streamId],
+            withdrawnAmount: _streams[streamId].amounts.withdrawn
+        });
 
         return streamedAmount;
     }
@@ -369,49 +289,4 @@ contract SablierLockup is ISablierLockup, SablierLockupBase {
     }
 
 
-    /// @dev See the documentation for the user-facing functions that call this internal function.
-    function _createLT(
-        Lockup.CreateWithTimestamps memory params,
-        LockupTranched.Tranche[] memory tranches
-    )
-        internal
-        returns (uint256 streamId)
-    {
-        // Check: validate the user-provided parameters and tranches.
-        Lockup.CreateAmounts memory createAmounts = Helpers.checkCreateLockupTranched({
-            sender: params.sender,
-            timestamps: params.timestamps,
-            totalAmount: params.totalAmount,
-            tranches: tranches,
-            maxCount: MAX_COUNT,
-            brokerFee: params.broker.fee,
-            shape: params.shape,
-            maxBrokerFee: MAX_BROKER_FEE
-        });
-
-        // Load the stream ID in a variable.
-        streamId = nextStreamId;
-
-        // Effect: store the tranches. Since Solidity lacks a syntax for copying arrays of structs directly from
-        // memory to storage, a manual approach is necessary. See https://github.com/ethereum/solidity/issues/12783.
-        uint256 trancheCount = tranches.length;
-        for (uint256 i = 0; i < trancheCount; ++i) {
-            _tranches[streamId].push(tranches[i]);
-        }
-
-        // Effect: create the stream,  mint the NFT and transfer the deposit amount.
-        Lockup.CreateEventCommon memory commonParams = _create({
-            streamId: streamId,
-            params: params,
-            createAmounts: createAmounts,
-            lockupModel: Lockup.Model.LOCKUP_TRANCHED
-        });
-
-        // Log the newly created stream.
-        emit ISablierLockup.CreateLockupTranchedStream({
-            streamId: streamId,
-            commonParams: commonParams,
-            tranches: tranches
-        });
-    }
 }

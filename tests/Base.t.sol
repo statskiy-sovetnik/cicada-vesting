@@ -57,10 +57,8 @@ abstract contract Base_Test is Assertions, Calculations, DeployOptimized, Modifi
         vm.label({ account: address(noop), newLabel: "Noop" });
         vm.label({ account: address(usdt), newLabel: "USDT" });
 
-        // Create the protocol admin.
-        users.admin = payable(makeAddr({ name: "Admin" }));
-        vm.deal({ account: users.admin, newBalance: 100 ether });
-        vm.startPrank({ msgSender: users.admin });
+        // Start as default test user
+        vm.startPrank({ msgSender: address(this) });
 
         // Deploy the defaults contract.
         defaults = new Defaults();
@@ -128,9 +126,9 @@ abstract contract Base_Test is Assertions, Calculations, DeployOptimized, Modifi
     /// for contracts deployed via `CREATE` are based on the caller-and-nonce-hash).
     function deployProtocolConditionally() internal {
         if (!isBenchmarkProfile() && !isTestOptimizedProfile()) {
-            lockup = new SablierLockup(users.admin, defaults.MAX_COUNT());
+            lockup = new SablierLockup(defaults.MAX_COUNT());
         } else {
-            lockup = deployOptimizedProtocol(users.admin, defaults.MAX_COUNT());
+            lockup = deployOptimizedProtocol(defaults.MAX_COUNT());
         }
         vm.label({ account: address(lockup), newLabel: "Lockup" });
     }
@@ -206,21 +204,6 @@ abstract contract Base_Test is Assertions, Calculations, DeployOptimized, Modifi
         });
     }
 
-    /// @dev Expects multiple calls to {ISablierLockup.createWithDurationsLT}.
-    function expectMultipleCallsToCreateWithDurationsLT(
-        uint64 count,
-        Lockup.CreateWithDurations memory params,
-        LockupTranched.TrancheWithDuration[] memory tranches
-    )
-        internal
-    {
-        vm.expectCall({
-            callee: address(lockup),
-            count: count,
-            data: abi.encodeCall(ISablierLockup.createWithDurationsLT, (params, tranches))
-        });
-    }
-
     /// @dev Expects multiple calls to {ISablierLockup.createWithTimestampsLL}.
     function expectMultipleCallsToCreateWithTimestampsLL(
         uint64 count,
@@ -234,21 +217,6 @@ abstract contract Base_Test is Assertions, Calculations, DeployOptimized, Modifi
             callee: address(lockup),
             count: count,
             data: abi.encodeCall(ISablierLockup.createWithTimestampsLL, (params, unlockAmounts, cliffTime))
-        });
-    }
-
-    /// @dev Expects multiple calls to {ISablierLockup.createWithTimestampsLT}.
-    function expectMultipleCallsToCreateWithTimestampsLT(
-        uint64 count,
-        Lockup.CreateWithTimestamps memory params,
-        LockupTranched.Tranche[] memory tranches
-    )
-        internal
-    {
-        vm.expectCall({
-            callee: address(lockup),
-            count: count,
-            data: abi.encodeCall(ISablierLockup.createWithTimestampsLT, (params, tranches))
         });
     }
 }

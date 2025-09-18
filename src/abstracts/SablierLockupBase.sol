@@ -11,16 +11,12 @@ import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 import { ISablierLockupBase } from "./../interfaces/ISablierLockupBase.sol";
 import { Errors } from "./../libraries/Errors.sol";
 import { Lockup } from "./../types/DataTypes.sol";
-import { Adminable } from "./Adminable.sol";
-import { Batch } from "./Batch.sol";
 import { NoDelegateCall } from "./NoDelegateCall.sol";
 
 /// @title SablierLockupBase
 /// @notice See the documentation in {ISablierLockupBase}.
 abstract contract SablierLockupBase is
-    Batch, // 1 inherited components
     NoDelegateCall, // 0 inherited components
-    Adminable, // 1 inherited components
     ISablierLockupBase, // 6 inherited components
     ERC721 // 6 inherited components
 {
@@ -43,8 +39,7 @@ abstract contract SablierLockupBase is
                                      CONSTRUCTOR
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @param initialAdmin The address of the initial contract admin.
-    constructor(address initialAdmin) Adminable(initialAdmin) {
+    constructor() {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -97,22 +92,6 @@ abstract contract SablierLockupBase is
     }
 
     /// @inheritdoc ISablierLockupBase
-    function getRefundedAmount(uint256 streamId)
-        external
-        view
-        override
-        notNull(streamId)
-        returns (uint128 refundedAmount)
-    {
-        refundedAmount = _streams[streamId].amounts.refunded;
-    }
-
-    /// @inheritdoc ISablierLockupBase
-    function getSender(uint256 streamId) external view override notNull(streamId) returns (address sender) {
-        sender = _streams[streamId].sender;
-    }
-
-    /// @inheritdoc ISablierLockupBase
     function getStartTime(uint256 streamId) external view override notNull(streamId) returns (uint40 startTime) {
         startTime = _streams[streamId].startTime;
     }
@@ -134,12 +113,6 @@ abstract contract SablierLockupBase is
     }
 
     /// @inheritdoc ISablierLockupBase
-    function isCold(uint256 streamId) external view override notNull(streamId) returns (bool result) {
-        Lockup.Status status = _statusOf(streamId);
-        result = status == Lockup.Status.SETTLED || status == Lockup.Status.DEPLETED;
-    }
-
-    /// @inheritdoc ISablierLockupBase
     function isDepleted(uint256 streamId) external view override notNull(streamId) returns (bool result) {
         result = _streams[streamId].isDepleted;
     }
@@ -147,34 +120,6 @@ abstract contract SablierLockupBase is
     /// @inheritdoc ISablierLockupBase
     function isStream(uint256 streamId) external view override returns (bool result) {
         result = _streams[streamId].isStream;
-    }
-
-    /// @inheritdoc ISablierLockupBase
-    function isTransferable(uint256 streamId) external view override notNull(streamId) returns (bool result) {
-        result = _streams[streamId].isTransferable;
-    }
-
-    /// @inheritdoc ISablierLockupBase
-    function isWarm(uint256 streamId) external view override notNull(streamId) returns (bool result) {
-        Lockup.Status status = _statusOf(streamId);
-        result = status == Lockup.Status.PENDING || status == Lockup.Status.STREAMING;
-    }
-
-    /// @inheritdoc ISablierLockupBase
-    function refundableAmountOf(uint256 streamId)
-        external
-        view
-        override
-        notNull(streamId)
-        returns (uint128 refundableAmount)
-    {
-        // These checks are needed because {_calculateStreamedAmount} does not look up the stream's status. Note that
-        // checking for `isCancelable` also checks if the stream `wasCanceled` thanks to the protocol invariant that
-        // canceled streams are not cancelable anymore.
-        if (!_streams[streamId].isDepleted) {
-            refundableAmount = _streams[streamId].amounts.deposited - _calculateStreamedAmount(streamId);
-        }
-        // Otherwise, the result is implicitly zero.
     }
 
     /// @inheritdoc ISablierLockupBase
@@ -323,36 +268,6 @@ abstract contract SablierLockupBase is
 
         // Checks and Effects: transfer the NFT.
         _transfer({ from: currentRecipient, to: newRecipient, tokenId: streamId });
-    }
-
-    /// @inheritdoc ISablierLockupBase
-    function withdrawMultiple(
-        uint256[] calldata streamIds,
-        uint128[] calldata amounts
-    )
-        external
-        payable
-        override
-        noDelegateCall
-    {
-        // Check: there is an equal number of `streamIds` and `amounts`.
-        uint256 streamIdsCount = streamIds.length;
-        uint256 amountsCount = amounts.length;
-        if (streamIdsCount != amountsCount) {
-            revert Errors.SablierLockupBase_WithdrawArrayCountsNotEqual(streamIdsCount, amountsCount);
-        }
-
-        // Iterate over the provided array of stream IDs and withdraw from each stream to the recipient.
-        for (uint256 i = 0; i < streamIdsCount; ++i) {
-            // Checks, Effects and Interactions: withdraw using delegatecall.
-            (bool success, bytes memory result) = address(this).delegatecall(
-                abi.encodeCall(ISablierLockupBase.withdraw, (streamIds[i], _ownerOf(streamIds[i]), amounts[i]))
-            );
-            // If the withdrawal reverts, log it using an event, and continue with the next stream.
-            if (!success) {
-                emit InvalidWithdrawalInWithdrawMultiple(streamIds[i], result);
-            }
-        }
     }
 
     /*//////////////////////////////////////////////////////////////////////////

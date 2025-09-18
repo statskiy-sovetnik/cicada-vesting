@@ -23,5 +23,10 @@ $ forge test --match-path "**/integration/concrete/lockup-base/**"
 ### Deploy
 
 ```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+$ forge create src/SablierLockup.sol:SablierLockup --rpc-url <YOUR_RPC_URL> \
+    --private-key <YOUR_PRIVATE_KEY> \
+    --broadcast \
+    --constructor-args "initialAdmin" "maxCount" 0x0000000000000000000000000000000000000000 500 \
+    --etherscan-api-key <YOUR_ETHERSCAN_API_KEY> \
+    --verify \
 ```

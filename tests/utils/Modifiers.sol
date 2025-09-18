@@ -78,11 +78,6 @@ abstract contract Modifiers is Fuzzers {
         _;
     }
 
-    modifier whenCallerAdmin() {
-        // Make the Admin the caller in the rest of this test suite.
-        resetPrank({ msgSender: users.admin });
-        _;
-    }
 
     modifier whenCallerAuthorizedForAllStreams() virtual {
         _;
@@ -380,13 +375,6 @@ abstract contract Modifiers is Fuzzers {
         _;
     }
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                   TRANSFER-ADMIN
-    //////////////////////////////////////////////////////////////////////////*/
-
-    modifier whenNewAdminNotSameAsCurrentAdmin() {
-        _;
-    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                       WITHDRAW
@@ -414,13 +402,6 @@ abstract contract Modifiers is Fuzzers {
         _;
     }
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                   COLLECT-FEES
-    //////////////////////////////////////////////////////////////////////////*/
-
-    modifier givenAdminIsContract() {
-        _;
-    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                    WITHDRAW-HOOKS

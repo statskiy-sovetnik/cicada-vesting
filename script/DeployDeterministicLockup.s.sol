@@ -7,13 +7,11 @@ import { BaseScript } from "./Base.s.sol";
 /// @notice Deploys {SablierLockup} at a deterministic address across chains.
 /// @dev Reverts if the contract has already been deployed.
 contract DeployDeterministicLockup is BaseScript {
-    function run(
-        address initialAdmin
-    )
+    function run()
         public
         broadcast
         returns (SablierLockup lockup)
     {
-        lockup = new SablierLockup{ salt: SALT }(initialAdmin, maxCountMap[block.chainid]);
+        lockup = new SablierLockup{ salt: SALT }(maxCountMap[block.chainid]);
     }
 }

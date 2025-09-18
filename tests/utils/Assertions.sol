@@ -5,14 +5,12 @@ pragma solidity >=0.8.22;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { PRBMathAssertions } from "@prb/math/test/utils/Assertions.sol";
 
-import { Lockup, LockupTranched } from "../../src/types/DataTypes.sol";
+import { Lockup } from "../../src/types/DataTypes.sol";
 
 abstract contract Assertions is PRBMathAssertions {
     /*//////////////////////////////////////////////////////////////////////////
                                        EVENTS
     //////////////////////////////////////////////////////////////////////////*/
-
-    event log_named_array(string key, LockupTranched.Tranche[] tranches);
 
     /*//////////////////////////////////////////////////////////////////////////
                                     FUNCTIONS
@@ -44,16 +42,6 @@ abstract contract Assertions is PRBMathAssertions {
     function assertEq(Lockup.Timestamps memory a, Lockup.Timestamps memory b) internal pure {
         assertEq(a.end, b.end, "timestamps.end");
         assertEq(a.start, b.start, "timestamps.start");
-    }
-
-    /// @dev Compares two {LockupTranched.Tranche} arrays.
-    function assertEq(LockupTranched.Tranche[] memory a, LockupTranched.Tranche[] memory b) internal {
-        if (keccak256(abi.encode(a)) != keccak256(abi.encode(b))) {
-            emit log("Error: a == b not satisfied [LockupTranched.Tranche[]]");
-            emit log_named_array("   Left", a);
-            emit log_named_array("  Right", b);
-            fail();
-        }
     }
 
     /// @dev Compares two {Lockup.Status} enum values.

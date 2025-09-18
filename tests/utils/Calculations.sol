@@ -6,7 +6,7 @@ import { PRBMathCastingUint40 as CastingUint40 } from "@prb/math/src/casting/Uin
 import { SD59x18 } from "@prb/math/src/SD59x18.sol";
 import { UD60x18, ud } from "@prb/math/src/UD60x18.sol";
 
-import { LockupLinear, LockupTranched } from "../../src/types/DataTypes.sol";
+import { LockupLinear } from "../../src/types/DataTypes.sol";
 
 abstract contract Calculations {
     using CastingUint128 for uint128;
@@ -58,36 +58,5 @@ abstract contract Calculations {
             UD60x18 streamedAmount = elapsedTimePercentage.mul(streamableAmount);
             return streamedAmount.add(unlockAmountsSum).intoUint128();
         }
-    }
-
-    /// @dev Helper function that replicates the logic of {VestingMath.calculateLockupTranchedStreamedAmount}.
-    function calculateLockupTranchedStreamedAmount(
-        LockupTranched.Tranche[] memory tranches,
-        uint128 depositAmount
-    )
-        internal
-        view
-        returns (uint128)
-    {
-        uint40 blockTimestamp = uint40(block.timestamp);
-        if (blockTimestamp >= tranches[tranches.length - 1].timestamp) {
-            return depositAmount;
-        }
-
-        // Sum the amounts in all tranches that precede the block timestamp.
-        uint128 streamedAmount = tranches[0].amount;
-        uint40 currentTrancheTimestamp = tranches[1].timestamp;
-        uint256 index = 1;
-
-        // Using unchecked arithmetic is safe because the tranches amounts sum equal to total amount at this point.
-        unchecked {
-            while (currentTrancheTimestamp <= blockTimestamp) {
-                streamedAmount += tranches[index].amount;
-                index += 1;
-                currentTrancheTimestamp = tranches[index].timestamp;
-            }
-        }
-
-        return streamedAmount;
     }
 }

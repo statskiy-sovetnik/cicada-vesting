@@ -58,19 +58,17 @@ contract Invariant_Test is Base_Test, StdInvariant {
 
         uint256 lastStreamId = lockupStore.lastStreamId();
         uint256 depositedAmountsSum;
-        uint256 refundedAmountsSum;
         uint256 withdrawnAmountsSum;
         for (uint256 i = 0; i < lastStreamId; ++i) {
             uint256 streamId = lockupStore.streamIds(i);
             depositedAmountsSum += uint256(lockup.getDepositedAmount(streamId));
-            refundedAmountsSum += uint256(lockup.getRefundedAmount(streamId));
             withdrawnAmountsSum += uint256(lockup.getWithdrawnAmount(streamId));
         }
 
         assertGe(
             contractBalance,
-            depositedAmountsSum - refundedAmountsSum - withdrawnAmountsSum,
-            unicode"Invariant violation: contract balances < Σ deposited amounts - Σ refunded amounts - Σ withdrawn amounts"
+            depositedAmountsSum - withdrawnAmountsSum,
+            unicode"Invariant violation: contract balances < Σ deposited amounts - Σ withdrawn amounts"
         );
     }
 
@@ -155,9 +153,9 @@ contract Invariant_Test is Base_Test, StdInvariant {
             uint256 streamId = lockupStore.streamIds(i);
             if (lockup.isDepleted(streamId)) {
                 assertEq(
-                    lockup.getDepositedAmount(streamId) - lockup.getRefundedAmount(streamId),
+                    lockup.getDepositedAmount(streamId),
                     lockup.getWithdrawnAmount(streamId),
-                    "Invariant violation: depleted stream with deposited amount - refunded amount != withdrawn amount"
+                    "Invariant violation: depleted stream with deposited amount != withdrawn amount"
                 );
                 assertEq(
                     lockup.withdrawableAmountOf(streamId),
@@ -174,19 +172,9 @@ contract Invariant_Test is Base_Test, StdInvariant {
             uint256 streamId = lockupStore.streamIds(i);
             if (lockup.statusOf(streamId) == Lockup.Status.PENDING) {
                 assertEq(
-                    lockup.getRefundedAmount(streamId),
-                    0,
-                    "Invariant violation: pending stream with a non-zero refunded amount"
-                );
-                assertEq(
                     lockup.getWithdrawnAmount(streamId),
                     0,
                     "Invariant violation: pending stream with a non-zero withdrawn amount"
-                );
-                assertEq(
-                    lockup.refundableAmountOf(streamId),
-                    lockup.getDepositedAmount(streamId),
-                    "Invariant violation: pending stream with refundable amount != deposited amount"
                 );
                 assertEq(
                     lockup.streamedAmountOf(streamId),
@@ -208,16 +196,6 @@ contract Invariant_Test is Base_Test, StdInvariant {
             uint256 streamId = lockupStore.streamIds(i);
             if (lockup.statusOf(streamId) == Lockup.Status.SETTLED) {
                 assertEq(
-                    lockup.getRefundedAmount(streamId),
-                    0,
-                    "Invariant violation: settled stream with a non-zero refunded amount"
-                );
-                assertEq(
-                    lockup.refundableAmountOf(streamId),
-                    0,
-                    "Invariant violation: settled stream with a non-zero refundable amount"
-                );
-                assertEq(
                     lockup.streamedAmountOf(streamId),
                     lockup.getDepositedAmount(streamId),
                     "Invariant violation: settled stream with streamed amount != deposited amount"
@@ -231,11 +209,6 @@ contract Invariant_Test is Base_Test, StdInvariant {
         for (uint256 i = 0; i < lastStreamId; ++i) {
             uint256 streamId = lockupStore.streamIds(i);
             if (lockup.statusOf(streamId) == Lockup.Status.STREAMING) {
-                assertEq(
-                    lockup.getRefundedAmount(streamId),
-                    0,
-                    "Invariant violation: streaming stream with a non-zero refunded amount"
-                );
                 assertLt(
                     lockup.streamedAmountOf(streamId),
                     lockup.getDepositedAmount(streamId),

@@ -222,10 +222,8 @@ abstract contract Lockup_Linear_Fork_Test is Fork_Test {
         assertEq(lockup.getDepositedAmount(vars.streamId), vars.createAmounts.deposit, "depositedAmount");
         assertFalse(lockup.isDepleted(vars.streamId), "isDepleted");
         assertTrue(lockup.isStream(vars.streamId), "isStream");
-        assertTrue(lockup.isTransferable(vars.streamId), "isTransferable");
         assertEq(lockup.getEndTime(vars.streamId), params.timestamps.end, "endTime");
         assertEq(lockup.getRecipient(vars.streamId), params.recipient, "recipient");
-        assertEq(lockup.getSender(vars.streamId), params.sender, "sender");
         assertEq(lockup.getStartTime(vars.streamId), params.timestamps.start, "startTime");
         assertEq(lockup.getUnderlyingToken(vars.streamId), FORK_TOKEN, "underlyingToken");
         assertEq(lockup.getUnlockAmounts(vars.streamId).start, params.unlockAmounts.start, "unlockAmounts.start");
@@ -290,7 +288,7 @@ abstract contract Lockup_Linear_Fork_Test is Fork_Test {
 
         // Check if the stream has settled or will get depleted. It is possible for the stream to be just settled
         // and not depleted because the withdraw amount is fuzzed.
-        vars.isSettled = lockup.refundableAmountOf(vars.streamId) == 0;
+        vars.isSettled = vars.streamedAmount == vars.createAmounts.deposit;
         vars.isDepleted = params.withdrawAmount == vars.createAmounts.deposit;
 
         // Only run the withdraw tests if the withdraw amount is not zero.

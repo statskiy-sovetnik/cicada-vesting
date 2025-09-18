@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ud2x18 } from "@prb/math/src/UD2x18.sol";
 import { UD60x18, ZERO } from "@prb/math/src/UD60x18.sol";
 
-import { Broker, Lockup, LockupLinear, LockupTranched } from "../../src/types/DataTypes.sol";
+import { Broker, Lockup, LockupLinear } from "../../src/types/DataTypes.sol";
 
 import { ArrayBuilder } from "./ArrayBuilder.sol";
 import { Constants } from "./Constants.sol";
@@ -27,7 +27,6 @@ contract Defaults is Constants {
     uint40 public immutable END_TIME;
     uint256 public constant MAX_COUNT = 10_000;
     uint40 public immutable MAX_SEGMENT_DURATION;
-    uint256 public constant MAX_TRANCHE_COUNT = 10_000;
     uint128 public constant REFUND_AMOUNT = DEPOSIT_AMOUNT - WITHDRAW_AMOUNT;
     uint256 public constant SEGMENT_COUNT = 2;
     string public constant SHAPE = "emits in the event";
@@ -36,7 +35,6 @@ contract Defaults is Constants {
     uint128 public constant STREAMED_AMOUNT_26_PERCENT = 2600e18;
     uint128 public constant TOTAL_AMOUNT = 10_030.090270812437311935e18; // deposit + broker fee
     uint40 public constant TOTAL_DURATION = 10_000 seconds;
-    uint256 public constant TRANCHE_COUNT = 2;
     uint128 public constant TOTAL_TRANSFER_AMOUNT = DEPOSIT_AMOUNT * uint128(BATCH_SIZE);
     uint128 public constant WITHDRAW_AMOUNT = STREAMED_AMOUNT_26_PERCENT;
     uint40 public immutable WARP_26_PERCENT;
@@ -144,23 +142,6 @@ contract Defaults is Constants {
 
     function lockupTimestamps() public view returns (Lockup.Timestamps memory) {
         return Lockup.Timestamps({ start: START_TIME, end: END_TIME });
-    }
-
-
-    function tranches() public view returns (LockupTranched.Tranche[] memory tranches_) {
-        tranches_ = new LockupTranched.Tranche[](2);
-        tranches_[0] = LockupTranched.Tranche({ amount: 2600e18, timestamp: WARP_26_PERCENT });
-        tranches_[1] = LockupTranched.Tranche({ amount: 7400e18, timestamp: START_TIME + TOTAL_DURATION });
-    }
-
-    function tranchesWithDurations()
-        public
-        pure
-        returns (LockupTranched.TrancheWithDuration[] memory tranchesWithDurations_)
-    {
-        tranchesWithDurations_ = new LockupTranched.TrancheWithDuration[](2);
-        tranchesWithDurations_[0] = LockupTranched.TrancheWithDuration({ amount: 2600e18, duration: 2600 seconds });
-        tranchesWithDurations_[1] = LockupTranched.TrancheWithDuration({ amount: 7400e18, duration: 7400 seconds });
     }
 
     function unlockAmounts() public pure returns (LockupLinear.UnlockAmounts memory) {

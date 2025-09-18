@@ -7,13 +7,11 @@ import { BaseScript } from "./Base.s.sol";
 
 /// @notice Deploys {SablierLockup} contract.
 contract DeployLockup is BaseScript {
-    function run(
-        address initialAdmin
-    )
+    function run()
         public
         broadcast
         returns (SablierLockup lockup)
     {
-        lockup = new SablierLockup(initialAdmin, maxCountMap[block.chainid]);
+        lockup = new SablierLockup(maxCountMap[block.chainid]);
     }
 }

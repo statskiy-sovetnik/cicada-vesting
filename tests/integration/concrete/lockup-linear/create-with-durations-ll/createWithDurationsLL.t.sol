@@ -70,10 +70,8 @@ contract CreateWithDurationsLL_Integration_Concrete_Test is Lockup_Linear_Integr
         assertEq(lockup.getEndTime(streamId), timestamps.end, "endTime");
         assertFalse(lockup.isDepleted(streamId), "isDepleted");
         assertTrue(lockup.isStream(streamId), "isStream");
-        assertTrue(lockup.isTransferable(streamId), "isTransferable");
         assertEq(lockup.getLockupModel(streamId), Lockup.Model.LOCKUP_LINEAR);
         assertEq(lockup.getRecipient(streamId), users.recipient, "recipient");
-        assertEq(lockup.getSender(streamId), users.sender, "sender");
         assertEq(lockup.getStartTime(streamId), timestamps.start, "startTime");
         assertEq(lockup.getUnderlyingToken(streamId), dai, "underlyingToken");
         assertEq(lockup.getUnlockAmounts(streamId).start, _defaultParams.unlockAmounts.start, "unlockAmounts.start");

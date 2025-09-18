@@ -68,57 +68,7 @@ contract Getters_Integration_Concrete_Test is Integration_Test {
         assertEq(actualRecipient, expectedRecipient, "recipient");
     }
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                GET-REFUNDED-AMOUNT
-    //////////////////////////////////////////////////////////////////////////*/
 
-    function test_GetRefundedAmountRevertGiven_Null() external {
-        expectRevert_Null({ callData: abi.encodeCall(lockup.getRefundedAmount, nullStreamId) });
-    }
-
-
-    function test_GetRefundedAmountGivenPENDINGStatus() external givenNotNull {
-        vm.warp({ newTimestamp: getBlockTimestamp() - 1 seconds });
-        uint128 actualRefundedAmount = lockup.getRefundedAmount(defaultStreamId);
-        uint128 expectedRefundedAmount = 0;
-        assertEq(actualRefundedAmount, expectedRefundedAmount, "refundedAmount");
-    }
-
-    function test_GetRefundedAmountGivenSETTLEDStatus() external givenNotNull {
-        vm.warp({ newTimestamp: defaults.END_TIME() });
-        uint128 actualRefundedAmount = lockup.getRefundedAmount(defaultStreamId);
-        uint128 expectedRefundedAmount = 0;
-        assertEq(actualRefundedAmount, expectedRefundedAmount, "refundedAmount");
-    }
-
-    function test_GetRefundedAmountGivenDEPLETEDStatus() external givenNotNull {
-        vm.warp({ newTimestamp: defaults.END_TIME() });
-        lockup.withdrawMax({ streamId: defaultStreamId, to: users.recipient });
-        uint128 actualRefundedAmount = lockup.getRefundedAmount(defaultStreamId);
-        uint128 expectedRefundedAmount = 0;
-        assertEq(actualRefundedAmount, expectedRefundedAmount, "refundedAmount");
-    }
-
-    function test_GetRefundedAmountGivenSTREAMINGStatus() external givenNotNull {
-        vm.warp({ newTimestamp: defaults.WARP_26_PERCENT() });
-        uint128 actualRefundedAmount = lockup.getRefundedAmount(defaultStreamId);
-        uint128 expectedRefundedAmount = 0;
-        assertEq(actualRefundedAmount, expectedRefundedAmount, "refundedAmount");
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                     GET-SENDER
-    //////////////////////////////////////////////////////////////////////////*/
-
-    function test_GetSenderRevertGiven_Null() external {
-        expectRevert_Null({ callData: abi.encodeCall(lockup.getSender, nullStreamId) });
-    }
-
-    function test_GetSenderGivenNotNull() external view {
-        address actualSender = lockup.getSender(defaultStreamId);
-        address expectedSender = users.sender;
-        assertEq(actualSender, expectedSender, "sender");
-    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                    GET-START-TIME
@@ -184,35 +134,6 @@ contract Getters_Integration_Concrete_Test is Integration_Test {
 
 
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                      IS-COLD
-    //////////////////////////////////////////////////////////////////////////*/
-
-    function test_IsColdRevertGiven_Null() external {
-        expectRevert_Null({ callData: abi.encodeCall(lockup.isCold, nullStreamId) });
-    }
-
-    function test_IsColdGivenPENDINGStatus() external givenNotNull {
-        vm.warp({ newTimestamp: getBlockTimestamp() - 1 seconds });
-        assertFalse(lockup.isCold(defaultStreamId), "isCold");
-    }
-
-    function test_IsColdGivenSTREAMINGStatus() external givenNotNull {
-        vm.warp({ newTimestamp: defaults.WARP_26_PERCENT() });
-        assertFalse(lockup.isCold(defaultStreamId), "isCold");
-    }
-
-    function test_IsColdGivenSETTLEDStatus() external givenNotNull {
-        vm.warp({ newTimestamp: defaults.END_TIME() });
-        assertTrue(lockup.isCold(defaultStreamId), "isCold");
-    }
-
-
-    function test_IsColdGivenDEPLETEDStatus() external givenNotNull {
-        vm.warp({ newTimestamp: defaults.END_TIME() });
-        lockup.withdrawMax({ streamId: defaultStreamId, to: users.recipient });
-        assertTrue(lockup.isCold(defaultStreamId), "isCold");
-    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                     IS-DEPLETED
@@ -244,49 +165,6 @@ contract Getters_Integration_Concrete_Test is Integration_Test {
         assertTrue(lockup.isStream(defaultStreamId), "isStream");
     }
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                  IS-TRANSFERABLE
-    //////////////////////////////////////////////////////////////////////////*/
 
-    function test_IsTransferableRevertGiven_Null() external {
-        expectRevert_Null({ callData: abi.encodeCall(lockup.isTransferable, nullStreamId) });
-    }
-
-    function test_IsTransferableGivenNonTransferableStream() external view givenNotNull {
-        assertFalse(lockup.isTransferable(notTransferableStreamId), "isTransferable");
-    }
-
-    function test_IsTransferableGivenTransferableStream() external view givenNotNull {
-        assertTrue(lockup.isTransferable(defaultStreamId), "isTransferable");
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                      IS-WARM
-    //////////////////////////////////////////////////////////////////////////*/
-
-    function test_IsWarmRevertGiven_Null() external {
-        expectRevert_Null({ callData: abi.encodeCall(lockup.isWarm, nullStreamId) });
-    }
-
-    function test_IsWarmGivenPENDINGStatus() external givenNotNull {
-        vm.warp({ newTimestamp: getBlockTimestamp() - 1 seconds });
-        assertTrue(lockup.isWarm(defaultStreamId), "isWarm");
-    }
-
-    function test_IsWarmGivenSTREAMINGStatus() external givenNotNull {
-        vm.warp({ newTimestamp: defaults.WARP_26_PERCENT() });
-        assertTrue(lockup.isWarm(defaultStreamId), "isWarm");
-    }
-
-    function test_IsWarmGivenSETTLEDStatus() external givenNotNull {
-        vm.warp({ newTimestamp: defaults.END_TIME() });
-        assertFalse(lockup.isWarm(defaultStreamId), "isWarm");
-    }
-
-    function test_IsWarmGivenDEPLETEDStatus() external givenNotNull {
-        vm.warp({ newTimestamp: defaults.END_TIME() });
-        lockup.withdrawMax({ streamId: defaultStreamId, to: users.recipient });
-        assertFalse(lockup.isWarm(defaultStreamId), "isWarm");
-    }
 
 }

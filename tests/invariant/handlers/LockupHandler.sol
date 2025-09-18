@@ -180,8 +180,6 @@ contract LockupHandler is BaseHandler {
         // Skip burned NFTs.
         vm.assume(currentRecipient != address(0));
 
-        // Skip if the stream is not transferable.
-        vm.assume(lockup.isTransferable(currentStreamId));
 
         // The protocol doesn't allow a zero amount to be withdrawn.
         vm.assume(lockup.withdrawableAmountOf(currentStreamId) != 0);
@@ -217,8 +215,6 @@ contract LockupHandler is BaseHandler {
         // Skip burned NFTs.
         vm.assume(currentRecipient != address(0));
 
-        // Skip if the stream is not transferable.
-        vm.assume(lockup.isTransferable(currentStreamId));
 
         // Transfer the NFT to the new recipient.
         lockup.transferFrom({ from: currentRecipient, to: newRecipient, tokenId: currentStreamId });

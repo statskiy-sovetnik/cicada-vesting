@@ -102,6 +102,7 @@ contract BaseScript is Script {
     function populateAdminMap() internal {
         adminMap[202105] = address(0); // Duckchain testnet
         adminMap[5545] = address(0); // Duckchain mainnet
+        adminMap[11155111] = address(0); // Sepolia
     }
 
     /// @dev Updates max values for segments and tranches. Values can be updated using the `update-counts.sh` script.
@@ -110,7 +111,7 @@ contract BaseScript is Script {
 
         maxCountMap[202105] = 500; // Duckchain testnet chain ID
         maxCountMap[5545] = 500; // Duckchain mainnet chain ID
-
+        maxCountMap[11155111] = 500; // Sepolia chain ID
         // forgefmt: disable-end
     }
 }

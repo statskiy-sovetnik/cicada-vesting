@@ -5,8 +5,6 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { PRBMathUtils } from "@prb/math/test/utils/Utils.sol";
 import { CommonBase } from "forge-std/src/Base.sol";
 
-import { LockupTranched } from "../../src/types/DataTypes.sol";
-
 abstract contract Utils is CommonBase, PRBMathUtils {
     /// @dev Bounds a `uint128` number.
     function boundUint128(uint128 x, uint128 min, uint128 max) internal pure returns (uint128) {
@@ -21,28 +19,6 @@ abstract contract Utils is CommonBase, PRBMathUtils {
     /// @dev Retrieves the current block timestamp as an `uint40`.
     function getBlockTimestamp() internal view returns (uint40) {
         return uint40(block.timestamp);
-    }
-
-
-    /// @dev Turns the tranches with durations into canonical tranches, which have timestamps.
-    function getTranchesWithTimestamps(LockupTranched.TrancheWithDuration[] memory tranches)
-        internal
-        view
-        returns (LockupTranched.Tranche[] memory tranchesWithTimestamps)
-    {
-        unchecked {
-            tranchesWithTimestamps = new LockupTranched.Tranche[](tranches.length);
-            tranchesWithTimestamps[0] = LockupTranched.Tranche({
-                amount: tranches[0].amount,
-                timestamp: getBlockTimestamp() + tranches[0].duration
-            });
-            for (uint256 i = 1; i < tranches.length; ++i) {
-                tranchesWithTimestamps[i] = LockupTranched.Tranche({
-                    amount: tranches[i].amount,
-                    timestamp: tranchesWithTimestamps[i - 1].timestamp + tranches[i].duration
-                });
-            }
-        }
     }
 
     /// @dev Checks if the Foundry profile is "benchmark".

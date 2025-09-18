@@ -2,8 +2,6 @@
 pragma solidity >=0.8.22;
 
 struct Users {
-    // Default admin.
-    address payable admin;
     // Impartial user.
     address payable alice;
     // Default stream broker.

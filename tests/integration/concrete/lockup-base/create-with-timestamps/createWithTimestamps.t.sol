@@ -17,13 +17,11 @@ abstract contract CreateWithTimestamps_Integration_Concrete_Test is Integration_
     /// @dev Helpers function to assert the common storaged values of a stream between all Lockup models.
     function assertEqStream(uint256 streamId) internal view {
         assertEq(lockup.getDepositedAmount(streamId), defaults.DEPOSIT_AMOUNT(), "depositedAmount");
-        assertEq(lockup.getSender(streamId), users.sender, "sender");
         assertEq(lockup.getRecipient(streamId), users.recipient, "recipient");
         assertEq(lockup.getStartTime(streamId), defaults.START_TIME(), "startTime");
         assertEq(lockup.getEndTime(streamId), defaults.END_TIME(), "endTime");
         assertFalse(lockup.isDepleted(streamId), "isDepleted");
         assertTrue(lockup.isStream(streamId), "isStream");
-        assertTrue(lockup.isTransferable(streamId), "isTransferable");
 
         // Assert that the stream's status is "PENDING".
         Lockup.Status actualStatus = lockup.statusOf(streamId);

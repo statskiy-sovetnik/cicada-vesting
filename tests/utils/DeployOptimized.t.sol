@@ -20,7 +20,6 @@ abstract contract DeployOptimized is StdCheats, CommonBase {
 
     /// @dev Deploys {SablierLockup} from an optimized source compiled with `--via-ir`.
     function deployOptimizedLockup(
-        address initialAdmin,
         uint256 maxCount
     )
         internal
@@ -47,7 +46,7 @@ abstract contract DeployOptimized is StdCheats, CommonBase {
 
         // Generate the creation bytecode with the constructor arguments.
         bytes memory createBytecode =
-            bytes.concat(vm.parseBytes(rawBytecode), abi.encode(initialAdmin, maxCount));
+            bytes.concat(vm.parseBytes(rawBytecode), abi.encode(maxCount));
         assembly {
             // Deploy the Lockup contract.
             lockup := create(0, add(createBytecode, 0x20), mload(createBytecode))
@@ -61,13 +60,12 @@ abstract contract DeployOptimized is StdCheats, CommonBase {
 
     /// @notice Deploys the lockup contract from an optimized source compiled with `--via-ir`.
     function deployOptimizedProtocol(
-        address initialAdmin,
         uint256 maxCount
     )
         internal
         returns (ISablierLockup lockup_)
     {
-        lockup_ = deployOptimizedLockup(initialAdmin, maxCount);
+        lockup_ = deployOptimizedLockup(maxCount);
     }
 
     /// @dev Get the library placeholder which is a 34 character prefix of the hex encoding of the keccak256 hash of the
