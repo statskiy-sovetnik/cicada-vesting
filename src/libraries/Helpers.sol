@@ -2,7 +2,7 @@
 pragma solidity >=0.8.22;
 
 import { UD60x18, ud } from "@prb/math/src/UD60x18.sol";
-import { Lockup, LockupLinear, LockupTranched } from "./../types/DataTypes.sol";
+import { Lockup, LockupLinear } from "./../types/DataTypes.sol";
 import { Errors } from "./Errors.sol";
 
 /// @title Helpers
@@ -11,37 +11,6 @@ library Helpers {
     /*//////////////////////////////////////////////////////////////////////////
                                 CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
-
-    /// @dev Calculate the timestamps and return the tranches.
-    function calculateTrancheTimestamps(
-        LockupTranched.TrancheWithDuration[] memory tranchesWithDuration,
-        uint40 startTime
-    )
-        public
-        pure
-        returns (LockupTranched.Tranche[] memory tranchesWithTimestamps)
-    {
-        uint256 trancheCount = tranchesWithDuration.length;
-        tranchesWithTimestamps = new LockupTranched.Tranche[](trancheCount);
-
-        // It is safe to use unchecked arithmetic because {SablierLockup-_createLT} will nonetheless check the
-        // correctness of the calculated tranche timestamps.
-        unchecked {
-            // The first tranche is precomputed because it is needed in the for loop below.
-            tranchesWithTimestamps[0] = LockupTranched.Tranche({
-                amount: tranchesWithDuration[0].amount,
-                timestamp: startTime + tranchesWithDuration[0].duration
-            });
-
-            // Copy the tranche amounts and calculate the tranche timestamps.
-            for (uint256 i = 1; i < trancheCount; ++i) {
-                tranchesWithTimestamps[i] = LockupTranched.Tranche({
-                    amount: tranchesWithDuration[i].amount,
-                    timestamp: tranchesWithTimestamps[i - 1].timestamp + tranchesWithDuration[i].duration
-                });
-            }
-        }
-    }
 
     /// @dev Checks the parameters of the {SablierLockup-_createLL} function.
     function checkCreateLockupLinear(
@@ -66,31 +35,6 @@ library Helpers {
 
         // Check: validate the user-provided cliff and end times.
         _checkTimestampsAndUnlockAmounts(createAmounts.deposit, timestamps, cliffTime, unlockAmounts);
-    }
-
-    /// @dev Checks the parameters of the {SablierLockup-_createLT} function.
-    function checkCreateLockupTranched(
-        address sender,
-        Lockup.Timestamps memory timestamps,
-        uint128 totalAmount,
-        LockupTranched.Tranche[] memory tranches,
-        uint256 maxCount,
-        UD60x18 brokerFee,
-        string memory shape,
-        UD60x18 maxBrokerFee
-    )
-        public
-        pure
-        returns (Lockup.CreateAmounts memory createAmounts)
-    {
-        // Check: verify the broker fee and calculate the amounts.
-        createAmounts = _checkAndCalculateBrokerFee(totalAmount, brokerFee, maxBrokerFee);
-
-        // Check: validate the user-provided common parameters.
-        _checkCreateStream(sender, createAmounts.deposit, timestamps.start, shape);
-
-        // Check: validate the user-provided segments.
-        _checkTranches(tranches, createAmounts.deposit, timestamps, maxCount);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -201,78 +145,6 @@ library Helpers {
         // Check: the shape is not greater than 32 bytes.
         if (bytes(shape).length > 32) {
             revert Errors.SablierHelpers_ShapeExceeds32Bytes(bytes(shape).length);
-        }
-    }
-
-    /// @dev Checks:
-    ///
-    /// 1. The first timestamp is strictly greater than the start time.
-    /// 2. The timestamps are ordered chronologically.
-    /// 3. There are no duplicate timestamps.
-    /// 4. The deposit amount is equal to the sum of all tranche amounts.
-    /// 5. The end time equals the last tranche's timestamp.
-    function _checkTranches(
-        LockupTranched.Tranche[] memory tranches,
-        uint128 depositAmount,
-        Lockup.Timestamps memory timestamps,
-        uint256 maxTrancheCount
-    )
-        private
-        pure
-    {
-        // Check: the tranche count is not zero.
-        uint256 trancheCount = tranches.length;
-        if (trancheCount == 0) {
-            revert Errors.SablierHelpers_TrancheCountZero();
-        }
-
-        // Check: the tranche count is not greater than the maximum allowed.
-        if (trancheCount > maxTrancheCount) {
-            revert Errors.SablierHelpers_TrancheCountTooHigh(trancheCount);
-        }
-
-        // Check: the start time is strictly less than the first tranche timestamp.
-        if (timestamps.start >= tranches[0].timestamp) {
-            revert Errors.SablierHelpers_StartTimeNotLessThanFirstTrancheTimestamp(
-                timestamps.start, tranches[0].timestamp
-            );
-        }
-
-        // Check: the end time equals the tranche's timestamp.
-        if (timestamps.end != tranches[trancheCount - 1].timestamp) {
-            revert Errors.SablierHelpers_EndTimeNotEqualToLastTrancheTimestamp(
-                timestamps.end, tranches[trancheCount - 1].timestamp
-            );
-        }
-
-        // Pre-declare the variables needed in the for loop.
-        uint128 trancheAmountsSum;
-        uint40 currentTrancheTimestamp;
-        uint40 previousTrancheTimestamp;
-
-        // Iterate over the tranches to:
-        //
-        // 1. Calculate the sum of all tranche amounts.
-        // 2. Check that the timestamps are ordered.
-        for (uint256 index = 0; index < trancheCount; ++index) {
-            // Add the current tranche amount to the sum.
-            trancheAmountsSum += tranches[index].amount;
-
-            // Check: the current timestamp is strictly greater than the previous timestamp.
-            currentTrancheTimestamp = tranches[index].timestamp;
-            if (currentTrancheTimestamp <= previousTrancheTimestamp) {
-                revert Errors.SablierHelpers_TrancheTimestampsNotOrdered(
-                    index, previousTrancheTimestamp, currentTrancheTimestamp
-                );
-            }
-
-            // Make the current timestamp the previous timestamp of the next loop iteration.
-            previousTrancheTimestamp = currentTrancheTimestamp;
-        }
-
-        // Check: the deposit amount is equal to the tranche amounts sum.
-        if (depositAmount != trancheAmountsSum) {
-            revert Errors.SablierHelpers_DepositAmountNotEqualToTrancheAmountsSum(depositAmount, trancheAmountsSum);
         }
     }
 }

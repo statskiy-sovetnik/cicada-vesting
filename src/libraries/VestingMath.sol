@@ -6,7 +6,7 @@ import { PRBMathCastingUint40 as CastingUint40 } from "@prb/math/src/casting/Uin
 import { SD59x18 } from "@prb/math/src/SD59x18.sol";
 import { UD60x18, ud } from "@prb/math/src/UD60x18.sol";
 
-import { Lockup, LockupLinear, LockupTranched } from "./../types/DataTypes.sol";
+import { Lockup, LockupLinear } from "./../types/DataTypes.sol";
 
 /// @title VestingMath
 /// @notice Library with functions needed to calculate vested amount across lockup streams.
@@ -100,65 +100,5 @@ library VestingMath {
 
             return streamedAmount;
         }
-    }
-
-    /// @notice Calculates the streamed amount for a Lockup tranched stream.
-    /// @dev Lockup tranched model uses the following distribution function:
-    ///
-    /// $$
-    /// f(x) = \Sigma(eta)
-    /// $$
-    ///
-    /// Where:
-    ///
-    /// - $\Sigma(eta)$ is the sum of all vested tranches' amounts.
-    ///
-    /// Assumptions:
-    /// 1. The sum of all tranche amounts does not overflow uint128, and equals the deposited amount.
-    /// 2. The first tranche's timestamp is greater than the start time.
-    /// 3. The last tranche's timestamp equals the end time.
-    /// 4. The tranche timestamps are arranged in ascending order.
-    function calculateLockupTranchedStreamedAmount(
-        uint128 depositedAmount,
-        uint40 blockTimestamp,
-        Lockup.Timestamps memory timestamps,
-        LockupTranched.Tranche[] memory tranches
-    )
-        public
-        pure
-        returns (uint128)
-    {
-        // If the start time is in the future, return zero.
-        if (timestamps.start > blockTimestamp) {
-            return 0;
-        }
-
-        // If the end time is not in the future, return the deposited amount.
-        if (timestamps.end <= blockTimestamp) {
-            return depositedAmount;
-        }
-
-        // If the first tranche's timestamp is in the future, return zero.
-        if (tranches[0].timestamp > blockTimestamp) {
-            return 0;
-        }
-
-        // Sum the amounts in all tranches that have already been vested.
-        // Using unchecked arithmetic is safe because the sum of the tranche amounts is equal to the total amount
-        // at this point.
-        uint128 streamedAmount = tranches[0].amount;
-        uint256 tranchesCount = tranches.length;
-        for (uint256 i = 1; i < tranchesCount; ++i) {
-            // The loop breaks at the first tranche with a timestamp in the future. A tranche is considered vested if
-            // its timestamp is less than or equal to the block timestamp.
-            if (tranches[i].timestamp > blockTimestamp) {
-                break;
-            }
-            unchecked {
-                streamedAmount += tranches[i].amount;
-            }
-        }
-
-        return streamedAmount;
     }
 }

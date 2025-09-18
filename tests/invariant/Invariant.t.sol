@@ -2,7 +2,7 @@
 pragma solidity >=0.8.22 <0.9.0;
 
 import { StdInvariant } from "forge-std/src/StdInvariant.sol";
-import { Lockup, LockupTranched } from "src/types/DataTypes.sol";
+import { Lockup } from "src/types/DataTypes.sol";
 import { Base_Test } from "../Base.t.sol";
 import { LockupCreateHandler } from "./handlers/LockupCreateHandler.sol";
 import { LockupHandler } from "./handlers/LockupHandler.sol";
@@ -316,28 +316,6 @@ contract Invariant_Test is Base_Test, StdInvariant {
                     lockup.getCliffTime(streamId),
                     "Invariant violated: end time <= cliff time"
                 );
-            }
-        }
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                  LOCKUP TRANCHED
-    //////////////////////////////////////////////////////////////////////////*/
-
-    /// @dev Unordered tranche timestamps are not allowed.
-    function invariant_TrancheTimestampsOrdered() external view {
-        uint256 lastStreamId = lockupStore.lastStreamId();
-        for (uint256 i = 0; i < lastStreamId; ++i) {
-            uint256 streamId = lockupStore.streamIds(i);
-            if (lockup.getLockupModel(streamId) == Lockup.Model.LOCKUP_TRANCHED) {
-                LockupTranched.Tranche[] memory tranches = lockup.getTranches(streamId);
-                uint40 previousTimestamp = tranches[0].timestamp;
-                for (uint256 j = 1; j < tranches.length; ++j) {
-                    assertGt(
-                        tranches[j].timestamp, previousTimestamp, "Invariant violated: tranche timestamps not ordered"
-                    );
-                    previousTimestamp = tranches[j].timestamp;
-                }
             }
         }
     }

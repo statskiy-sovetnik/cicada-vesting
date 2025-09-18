@@ -11,17 +11,6 @@ contract GetCliffTime_Integration_Concrete_Test is Lockup_Linear_Integration_Con
         expectRevert_Null({ callData: abi.encodeCall(lockup.getCliffTime, nullStreamId) });
     }
 
-    function test_RevertGiven_NotLinearModel() external givenNotNull {
-        lockupModel = Lockup.Model.LOCKUP_TRANCHED;
-        uint256 streamId = createDefaultStream();
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Errors.SablierLockup_NotExpectedModel.selector, Lockup.Model.LOCKUP_TRANCHED, Lockup.Model.LOCKUP_LINEAR
-            )
-        );
-        lockup.getCliffTime(streamId);
-    }
-
     function test_GivenLinearModel() external view givenNotNull {
         uint40 actualCliffTime = lockup.getCliffTime(defaultStreamId);
         uint40 expectedCliffTime = defaults.CLIFF_TIME();

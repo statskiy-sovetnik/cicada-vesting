@@ -11,17 +11,6 @@ contract GetUnlockAmounts_Integration_Concrete_Test is Lockup_Linear_Integration
         expectRevert_Null({ callData: abi.encodeCall(lockup.getUnlockAmounts, nullStreamId) });
     }
 
-    function test_RevertGiven_NotLinearModel() external givenNotNull {
-        lockupModel = Lockup.Model.LOCKUP_TRANCHED;
-        uint256 streamId = createDefaultStream();
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Errors.SablierLockup_NotExpectedModel.selector, Lockup.Model.LOCKUP_TRANCHED, Lockup.Model.LOCKUP_LINEAR
-            )
-        );
-        lockup.getUnlockAmounts(streamId);
-    }
-
     function test_GivenBothAmountsZero() external givenNotNull givenLinearModel {
         _defaultParams.unlockAmounts = defaults.unlockAmountsZero();
         uint256 streamId = createDefaultStream();

@@ -4,7 +4,7 @@ pragma solidity >=0.8.22 <0.9.0;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ISablierLockup } from "src/interfaces/ISablierLockup.sol";
-import { Lockup, LockupLinear, LockupTranched } from "src/types/DataTypes.sol";
+import { Lockup, LockupLinear } from "src/types/DataTypes.sol";
 
 import { Calculations } from "tests/utils/Calculations.sol";
 import { LockupStore } from "../stores/LockupStore.sol";
@@ -63,51 +63,6 @@ contract LockupCreateHandler is BaseHandler, Calculations {
         lockupStore.pushStreamId(streamId, params.sender, params.recipient);
     }
 
-    function createWithDurationsLT(
-        uint256 timeJumpSeed,
-        Lockup.CreateWithDurations memory params,
-        LockupTranched.TrancheWithDuration[] memory tranches
-    )
-        public
-        instrument("createWithDurationsLT")
-        adjustTimestamp(timeJumpSeed)
-        checkUsers(params.sender, params.recipient, params.broker.account)
-        useNewSender(params.sender)
-    {
-        // We don't want to create more than a certain number of streams.
-        vm.assume(lockupStore.lastStreamId() <= MAX_STREAM_COUNT);
-
-        // The protocol doesn't allow empty tranche arrays.
-        vm.assume(tranches.length != 0);
-
-        // Bound the broker fee.
-        params.broker.fee = _bound(params.broker.fee, 0, MAX_BROKER_FEE);
-
-        // Fuzz the durations.
-        fuzzTrancheDurations(tranches);
-
-        // Fuzz the tranche amounts and calculate the total amount.
-        (params.totalAmount,) = fuzzTranchedStreamAmounts({
-            upperBound: 1_000_000_000e18,
-            tranches: tranches,
-            brokerFee: params.broker.fee
-        });
-
-        // Mint enough tokens to the Sender.
-        deal({ token: address(token), to: params.sender, give: token.balanceOf(params.sender) + params.totalAmount });
-
-        // Approve {SablierLockup} to spend the tokens.
-        token.approve({ spender: address(lockup), value: params.totalAmount });
-
-        // Create the stream.
-        params.token = token;
-        params.shape = "Tranched Stream";
-        uint256 streamId = lockup.createWithDurationsLT(params, tranches);
-
-        // Store the stream ID.
-        lockupStore.pushStreamId(streamId, params.sender, params.recipient);
-    }
-
 
     function createWithTimestampsLL(
         uint256 timeJumpSeed,
@@ -136,52 +91,6 @@ contract LockupCreateHandler is BaseHandler, Calculations {
         params.token = token;
         params.shape = "Linear Stream";
         uint256 streamId = lockup.createWithTimestampsLL(params, unlockAmounts, cliffTime);
-
-        // Store the stream ID.
-        lockupStore.pushStreamId(streamId, params.sender, params.recipient);
-    }
-
-    function createWithTimestampsLT(
-        uint256 timeJumpSeed,
-        Lockup.CreateWithTimestamps memory params,
-        LockupTranched.Tranche[] memory tranches
-    )
-        public
-        instrument("createWithTimestampsLT")
-        adjustTimestamp(timeJumpSeed)
-        checkUsers(params.sender, params.recipient, params.broker.account)
-        useNewSender(params.sender)
-    {
-        // We don't want to create more than a certain number of streams.
-        vm.assume(lockupStore.lastStreamId() <= MAX_STREAM_COUNT);
-
-        // The protocol doesn't allow empty tranche arrays.
-        vm.assume(tranches.length != 0);
-
-        params.broker.fee = _bound(params.broker.fee, 0, MAX_BROKER_FEE);
-        params.timestamps.start = boundUint40(params.timestamps.start, 1, getBlockTimestamp());
-
-        // Fuzz the tranche timestamps.
-        fuzzTrancheTimestamps(tranches, params.timestamps.start);
-
-        // Fuzz the tranche amounts and calculate the total amount.
-        (params.totalAmount,) = fuzzTranchedStreamAmounts({
-            upperBound: 1_000_000_000e18,
-            tranches: tranches,
-            brokerFee: params.broker.fee
-        });
-
-        // Mint enough tokens to the Sender.
-        deal({ token: address(token), to: params.sender, give: token.balanceOf(params.sender) + params.totalAmount });
-
-        // Approve {SablierLockup} to spend the tokens.
-        token.approve({ spender: address(lockup), value: params.totalAmount });
-
-        // Create the stream.
-        params.token = token;
-        params.shape = "Tranched Stream";
-        params.timestamps.end = tranches[tranches.length - 1].timestamp;
-        uint256 streamId = lockup.createWithTimestampsLT(params, tranches);
 
         // Store the stream ID.
         lockupStore.pushStreamId(streamId, params.sender, params.recipient);

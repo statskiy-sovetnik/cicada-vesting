@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ISablierLockup } from "src/interfaces/ISablierLockup.sol";
 import { SablierLockup } from "src/SablierLockup.sol";
-import { Lockup, LockupLinear, LockupTranched } from "src/types/DataTypes.sol";
+import { Lockup, LockupLinear } from "src/types/DataTypes.sol";
 
 import { ERC20MissingReturn } from "./mocks/erc20/ERC20MissingReturn.sol";
 import { ERC20Mock } from "./mocks/erc20/ERC20Mock.sol";
