@@ -1,7 +1,7 @@
 [profile.default]
   auto_detect_solc = false
   bytecode_hash = "none"
-  evm_version = "shanghai"
+  evm_version = "cancun"
   fs_permissions = [
     { access = "read", path = "./out-optimized" },
     { access = "read", path = "package.json" },
@@ -98,6 +98,6 @@
 [rpc_endpoints]
   localhost = "http://localhost:8545"
   mainnet = "${MAINNET_RPC_URL}"
-  sepolia = "${SEPOLIA_RPC_URL}"
+  sepolia = "https://eth-sepolia.public.blastapi.io"
   duckchain = "https://rpc.duckchain.io"
   duckchain_testnet = "https://testnet-rpc.duckchain.io"
