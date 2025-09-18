@@ -30,12 +30,11 @@ abstract contract Fork_Test is Base_Test {
     //////////////////////////////////////////////////////////////////////////*/
 
     function setUp() public virtual override {
-        // Fork Ethereum Mainnet at a specific block number.
-        vm.createSelectFork({ blockNumber: 24_619_683, urlOrAlias: "duckchain" });
+        // Fork Duckchain Mainnet at a specific block number.
+        vm.createSelectFork({ blockNumber: 24_624_238, urlOrAlias: "https://rpc.duckchain.io" });
 
-        // Load deployed addresses from Ethereum mainnet.
-        // TODO deploy and change address here
-        lockup = ISablierLockup(0x7C01AA3783577E15fD7e272443D44B92d5b21056);
+        // Load deployed addresses from Duckchain mainnet.
+        lockup = ISablierLockup(0xE3fdbcaA4d01eae778D45053cf582e902fA6149E);
 
         // Create a custom user for this test suite.
         forkTokenHolder = payable(makeAddr(string.concat(IERC20Metadata(address(FORK_TOKEN)).symbol(), "_HOLDER")));
@@ -64,10 +63,6 @@ abstract contract Fork_Test is Base_Test {
         vm.assume(sender != forkTokenHolder && recipient != forkTokenHolder && broker != forkTokenHolder);
         vm.assume(sender != lockupContract && recipient != lockupContract && broker != lockupContract);
 
-        // Avoid users blacklisted by USDC or USDT.
-        assumeNoBlacklisted(address(FORK_TOKEN), sender);
-        assumeNoBlacklisted(address(FORK_TOKEN), recipient);
-        assumeNoBlacklisted(address(FORK_TOKEN), broker);
     }
 
     /// @dev Labels the most relevant addresses.

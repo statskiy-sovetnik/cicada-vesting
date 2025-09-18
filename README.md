@@ -22,11 +22,13 @@ $ forge test --match-path "**/integration/concrete/lockup-base/**"
 
 ### Deploy
 
+The script will prompt you to enter the deployer's private key.
+
 ```shell
-$ forge create src/SablierLockup.sol:SablierLockup --rpc-url <YOUR_RPC_URL> \
-    --private-key <YOUR_PRIVATE_KEY> \
-    --broadcast \
-    --constructor-args "initialAdmin" "maxCount" 0x0000000000000000000000000000000000000000 500 \
-    --etherscan-api-key <YOUR_ETHERSCAN_API_KEY> \
-    --verify \
+$ forge script --chain <CHAIN> script/DeployLockup.s.sol --rpc-url <RPC> --broadcast --verify -vvvv --interactives 1
+```
+
+Deploying on Duckchain:
+```shell
+$ forge script --chain 5545 script/DeployLockup.s.sol --rpc-url https://rpc.duckchain.io --broadcast -vvvv --interactives 1
 ```

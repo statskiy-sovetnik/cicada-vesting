@@ -6,6 +6,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Lockup_Linear_Fork_Test } from "../LockupLinear.t.sol";
 
 /// @dev A typical 18-decimal ERC-20 token with a normal total supply.
-IERC20 constant FORK_TOKEN = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
+IERC20 constant FORK_TOKEN = IERC20(0xdA65892eA771d3268610337E9964D916028B7dAD);
 
-contract DAI_Lockup_Linear_Fork_Test is Lockup_Linear_Fork_Test(FORK_TOKEN) { }
+contract DUCK_Lockup_Linear_Fork_Test is Lockup_Linear_Fork_Test(FORK_TOKEN) { }

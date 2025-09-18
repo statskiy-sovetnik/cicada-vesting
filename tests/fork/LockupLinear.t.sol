@@ -81,12 +81,6 @@ abstract contract Lockup_Linear_Fork_Test is Fork_Test {
         uint128 expectedWithdrawnAmount;
         uint256 initialLockupBalanceETH;
         uint128 withdrawableAmount;
-        // Cancel vars
-        uint256 actualSenderBalance;
-        uint256 expectedSenderBalance;
-        uint256 initialSenderBalance;
-        uint128 recipientAmount;
-        uint128 senderAmount;
     }
 
     /// @dev Checklist:
@@ -285,6 +279,15 @@ abstract contract Lockup_Linear_Fork_Test is Fork_Test {
         // Bound the withdraw amount.
         vars.withdrawableAmount = lockup.withdrawableAmountOf(vars.streamId);
         params.withdrawAmount = boundUint128(params.withdrawAmount, 0, vars.withdrawableAmount);
+
+        // Recalculate streamed amount after time warp
+        vars.streamedAmount = calculateLockupLinearStreamedAmount(
+            params.timestamps.start,
+            params.cliffTime,
+            params.timestamps.end,
+            vars.createAmounts.deposit,
+            params.unlockAmounts
+        );
 
         // Check if the stream has settled or will get depleted. It is possible for the stream to be just settled
         // and not depleted because the withdraw amount is fuzzed.

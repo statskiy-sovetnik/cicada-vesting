@@ -55,16 +55,8 @@ contract BaseScript is Script {
         // Construct the salt for deterministic deployments.
         SALT = constructCreate2Salt();
 
-        // Populate the admin map.
-        populateAdminMap();
-
         // Populate the max count map for segments and tranches.
         populateMaxCountMap();
-
-        // If there is no admin set for a specific chain, use the default Sablier admin.
-        if (adminMap[block.chainid] == address(0)) {
-            adminMap[block.chainid] = DEFAULT_SABLIER_ADMIN;
-        }
 
         // If there is no maximum value set for a specific chain, use the default value.
         if (maxCountMap[block.chainid] == 0) {
@@ -95,14 +87,6 @@ contract BaseScript is Script {
     function getVersion() internal view returns (string memory) {
         string memory json = vm.readFile("package.json");
         return json.readString(".version");
-    }
-
-    /// @dev Populates the admin map. The reason the chain IDs configured for the admin map do not match the other
-    /// maps is that we only have multisigs for the chains listed below, otherwise, the default admin is used.​
-    function populateAdminMap() internal {
-        adminMap[202105] = address(0); // Duckchain testnet
-        adminMap[5545] = address(0); // Duckchain mainnet
-        adminMap[11155111] = address(0); // Sepolia
     }
 
     /// @dev Updates max values for segments and tranches. Values can be updated using the `update-counts.sh` script.
