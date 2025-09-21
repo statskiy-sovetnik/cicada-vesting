@@ -1,5 +1,10 @@
 ## Usage
 
+### Run stream creation scripts
+```shell
+$ forge script script/CreateStream_D90.s.sol:CreateStream_D90 --rpc-url https://rpc.duckchain.io  --broadcast -vvvv
+```
+
 ### Build
 
 ```shell

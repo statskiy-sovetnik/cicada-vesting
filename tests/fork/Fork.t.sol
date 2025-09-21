@@ -31,10 +31,10 @@ abstract contract Fork_Test is Base_Test {
 
     function setUp() public virtual override {
         // Fork Duckchain Mainnet at a specific block number.
-        vm.createSelectFork({ blockNumber: 24_624_238, urlOrAlias: "https://rpc.duckchain.io" });
+        vm.createSelectFork({ blockNumber: 24_674_621, urlOrAlias: "https://rpc.duckchain.io" });
 
         // Load deployed addresses from Duckchain mainnet.
-        lockup = ISablierLockup(0xE3fdbcaA4d01eae778D45053cf582e902fA6149E);
+        lockup = ISablierLockup(0x4051Ca516a3f8F0c1Bb1D677413b5a883d6c23ab);
 
         // Create a custom user for this test suite.
         forkTokenHolder = payable(makeAddr(string.concat(IERC20Metadata(address(FORK_TOKEN)).symbol(), "_HOLDER")));

@@ -31,20 +31,17 @@ interface ISablierLockup {
 }
 
 abstract contract CreateStreamBase is Script {
-    address constant LOCKUP_ADDR    = 0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa; // TODO change address
-    address constant TOKEN_ADDR     = 0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB; // TODO change address
-    address constant RECIPIENT      = 0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC; // TODO change address
-    address constant SENDER         = 0xDDdDddDdDdddDDddDDddDDDDdDdDDdDDdDDDDDDd; // TODO change address
+    address constant LOCKUP_ADDR    = 0x4051Ca516a3f8F0c1Bb1D677413b5a883d6c23ab;
+    address constant TOKEN_ADDR     = 0xdA65892eA771d3268610337E9964D916028B7dAD;
+    address constant RECIPIENT      = 0xe2D3f8c3C5597736ea34F1A24C6D3C9000e9796e; // TODO change address
+    address constant SENDER         = 0xe2D3f8c3C5597736ea34F1A24C6D3C9000e9796e; // TODO change address
     bool    constant TRANSFERABLE   = true;
     address constant BROKER_ACCOUNT = address(0);
     uint256 constant BROKER_FEE     = 0;
 
-    uint128 constant AMOUNT         = 0; // TODO: set 20% tranche
-    uint40  constant CLIFF_DAYS     = 90;
-
-    function run(uint40 t0) external {
-        uint40 startTime = t0;
-        uint40 cliff     = t0 + _cliffDays() * 1 days;
+    function run() external {
+        uint40 startTime = uint40(block.timestamp + 60); // 1 minute from now
+        uint40 cliff     = startTime + _cliffDays() * 1 days;
         uint40 endTime   = cliff + 1;
 
         uint256 pk = vm.envUint("PRIVATE_KEY");
@@ -72,7 +69,7 @@ abstract contract CreateStreamBase is Script {
 
         vm.stopBroadcast();
 
-        console2.log("D90 streamId:", id);
+        console2.log("StreamId:", id);
         console2.log("Start:", startTime);
         console2.log("Cliff:", cliff, "End:", endTime);
     }

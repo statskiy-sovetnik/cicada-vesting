@@ -10,6 +10,6 @@ contract CreateStream_D180 is CreateStreamBase {
 
     function _cliffUnlockAmount() internal override view returns (uint128) {
         uint8 decimals = IERC20(TOKEN_ADDR).decimals();
-        return 0 * uint128(10 ** decimals); // TODO: set 30% tranche
+        return 30 * uint128(10 ** decimals); // TODO: set 30% tranche
     }
 }
